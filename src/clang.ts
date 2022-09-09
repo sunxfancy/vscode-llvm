@@ -2,14 +2,37 @@ import which = require("which");
 import * as path from 'path';
 import * as util from 'util';
 import * as vscode from 'vscode';
-const exec = util.promisify(require('child_process').exec);
+import { exec, spawn } from 'child_process';
+const exec_ = util.promisify(exec);
 
 
 export class Command {
-    private args?: string[];
-    private input?: string; 
-    private output?: string; 
-    private env?: Map<string, string>;
+    public exe: string;
+    public args: string[];
+    public input: string; 
+    public output: string; 
+    public language: string;
+
+    // this must be a real command
+    constructor(commands: string[]) {
+        this.exe = commands[0];
+        this.language = commands[commands.indexOf("-x") + 1];
+        this.input = commands[commands.indexOf("-x") + 2];
+        this.output = commands[commands.indexOf("-o") + 1];
+        commands.splice(commands.indexOf("-x"), 3);
+        commands.splice(commands.indexOf("-o"), 2);
+        commands.splice(0, 1);
+        this.args = commands;
+    }
+
+    public redirectOutputToStdout() {
+        this.output = '-';
+    }
+
+    public toString() {
+        return this.exe + " " + this.args.join(" ") + " -o " + this.output 
+                + " -x " + this.language + " " + this.input; 
+    }
 }
 
 export class CommandEnv {
@@ -23,55 +46,45 @@ export class CommandEnv {
         if (env) { this.env = env; }
     }
 
-    public async runClang(args: string[], output?: string, env?: Map<string, string>): Promise<string|undefined> {
-        try {
-            const { stdout, stderr } = await exec("clang " + args.join(" ") + " -o " + output);
-            return <string>stdout;
-        } catch(e) {
-            console.error(e);
-        }
+
+    public async runClang(cmd: Command, env?: Map<string, string>) {
+        console.log("runClang: " + cmd.toString());
+        return exec_(cmd.toString());
     }
 
-    public async runOPT(args: string[], output?: string, env?: Map<string, string>) {
-        try {
-            const { stdout, stderr } = await exec("opt " + args.join(" ") + " -o " + output);
-            return stdout;
-        } catch(e) {
-            console.error(e);
-        }
+    public async runClangRaw(cmd: string, env?: Map<string, string>) {
+        console.log("runClangRaw: " + cmd);
+        return exec_(cmd);
     }
 
-    public async runLLC(args: string[], output?: string, env?: Map<string, string>) {
-        try {
-            const { stdout, stderr } = await exec("llc " + args.join(" ") + " -o " + output);
-            return stdout;
-        } catch(e) {
-            console.error(e);
-        }
+    public async runOPT(args: string[], output?: string, env?: Map<string, string>): Promise<any|undefined>  {
+        
+    }
+
+    public async runLLC(args: string[], output?: string, env?: Map<string, string>): Promise<any|undefined> {
+        
     }
 
 
-    public getLLVMOpt(): string[] {
+    getLLVMOpt(): string[] {
         return ['-mllvm', '-print-after-all'];
     }
 
-    public async getRealCommand(args: string[], output?: string, env?: Map<string, string>): Promise<string> {
-        let stdout = await this.runClang(args, output, env);
-        if (stdout) {
-            let lines = stdout.split("\n");
-            let realCommand = lines.slice(5).join(" ");
-            console.log("realCommand: " + realCommand);
-            return realCommand;
-        } else {
-            return "";
-        }
-    }
+    public setDebug() {
+        return ['-g', '-S'];
+    }    
 
-    public deposition(command: string) {
-        let commands = command.split(" ");
-        let output = commands[commands.indexOf("-o") + 1];
-        let language = commands[commands.indexOf("-x") + 1];
-        let input = commands[commands.indexOf("-x") + 2];
+    public async getRealCommand(args: string, env?: Map<string, string>): Promise<string[]> {
+        const {stdout, stderr} = await this.runClangRaw(args + " -###", env);
+        console.log(stdout, stderr);
+        if (stderr !== "") {
+            let lines = stderr.split("\n");
+            let realCommand = lines[5].trim();
+            console.log("realCommand: " + realCommand);
+            return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
+        } else {
+            return [];
+        }
     }
 
     private llvmPath: string;

@@ -2,28 +2,37 @@ body {
 	background-color: transparent;
 }
 
-.color-list {
+.command-list {
 	list-style: none;
 	padding: 0;
 }
 
-.color-entry {
+.command-entry {
 	width: 100%;
 	display: flex;
 	margin-bottom: 0.4em;
 	border: 1px solid var(--vscode-input-border);
 }
 
-.color-preview {
-	width: 2em;
-	height: 2em;
+.command-checkbox {
+	width: 1em;
+	height: 1em;
+	align-self: center;
 }
 
-.color-preview:hover {
-	outline: inset white;
+.command-label {
+	flex: 1;
 }
 
-.color-input {
+.command-label:hover{
+	color: var(--vscode-textLink-activeForeground);
+}
+
+.command-label:active{
+	background-color: var(--vscode-input-background);
+}
+
+.command-input {
 	display: block;
 	flex: 1;
 	width: 100%;
@@ -33,8 +42,12 @@ body {
 	padding: 0 0.6em;
 }
 
-.add-color-button {
+.btn-container {
+	display: flex;
+}
+
+.config-btn {
 	display: block;
 	border: none;
-	margin: 0 auto;
+	width: 33.33333333333%;
 }

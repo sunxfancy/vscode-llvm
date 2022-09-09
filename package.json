@@ -25,6 +25,10 @@
         "command": "llvmPipelineView.settings",
         "title": "LLVM Pipeline View Settings",
         "icon": "$(gear)"
+      },
+      {
+        "command": "vscode-llvm.reloadConfig",
+        "title": "LLVM Pass Reload Configurations"
       }
     ],
     "viewsContainers": {

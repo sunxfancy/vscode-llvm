@@ -1,12 +1,6 @@
 import * as vscode from 'vscode';
+import { Core } from './core';
 
-export class TestView {
-
-	constructor(context: vscode.ExtensionContext) {
-		const view = vscode.window.createTreeView('llvm-pipeline-view', { treeDataProvider: aNodeWithIdTreeDataProvider(), showCollapseAll: true });
-		context.subscriptions.push(view);
-	}
-}
 
 const tree: any = {
 	'input': {
@@ -25,11 +19,13 @@ const tree: any = {
     'back end': {
         'pass1': {},
         'pass2': {}
-    }
+    },
+	'output': {
+	}
 };
 const nodes: any = {};
 
-function aNodeWithIdTreeDataProvider(): vscode.TreeDataProvider<{ key: string }> {
+export function aNodeWithIdTreeDataProvider(core: Core): vscode.TreeDataProvider<{ key: string }> {
 	return {
 		getChildren: (element: { key: string }): { key: string }[] => {
 			return getChildren(element ? element.key : undefined).map(key => getNode(key));

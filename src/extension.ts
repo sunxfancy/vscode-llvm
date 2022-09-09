@@ -3,8 +3,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import {ColorsViewProvider} from './control-panel';
-import {TestView} from './pipeline-panel';
+import {ConfigViewProvider} from './control-panel';
+import {aNodeWithIdTreeDataProvider} from './pipeline-panel';
+import { Core } from './core';
 
 /** Test whether a directory exists */
 export async function checkDirectoryExists(dirPath: string): Promise<boolean> {
@@ -150,14 +151,22 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }
     }
-
-	const provider = new ColorsViewProvider(context.extensionUri);
-	const testView = new TestView(context);
+	
+	let core = new Core();
+	const provider = new ConfigViewProvider(context.extensionUri, core);
+	const pipelineView = vscode.window.createTreeView('llvm-pipeline-view', { treeDataProvider: aNodeWithIdTreeDataProvider(core), showCollapseAll: true });
+		
+	const reloadAction = vscode.commands.registerCommand('vscode-llvm.reloadConfig', () => {
+		provider.reloadConfig();
+		vscode.window.showInformationMessage('reload config done from vscode-llvm!');
+	});
 
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(openSettings);
+	context.subscriptions.push(pipelineView);
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ColorsViewProvider.viewType, provider));
+		vscode.window.registerWebviewViewProvider(ConfigViewProvider.viewType, provider));
+	context.subscriptions.push(reloadAction);
 }
 
 // this method is called when your extension is deactivated

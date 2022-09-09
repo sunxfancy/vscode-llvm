@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-
-export class ColorsViewProvider implements vscode.WebviewViewProvider {
+import { CommandEnv } from './clang';
+import { Core } from './core';
+export class ConfigViewProvider implements vscode.WebviewViewProvider {
 
 	public static readonly viewType = 'llvm-control';
 
@@ -8,6 +9,7 @@ export class ColorsViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
+		private _core: Core
 	) { }
 
 	public resolveWebviewView(
@@ -30,25 +32,31 @@ export class ColorsViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
-				case 'colorSelected':
-					{
-						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
-						break;
+				case 'select': {
+					if (vscode.window.activeTextEditor) {
+						let path = vscode.window.activeTextEditor.document.uri.path;
+						this._core.ensurePipeline(data.value, path, new CommandEnv());
 					}
+					break;
+				}
+				case 'compare': {
+					
+				}
 			}
 		});
 	}
 
-	public addColor() {
+	public addConfig(command: string) {
 		if (this._view) {
 			this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-			this._view.webview.postMessage({ type: 'addColor' });
+			this._view.webview.postMessage({ type: 'addConfig' });
 		}
 	}
 
-	public clearColors() {
+	public reloadConfig() {
+		console.log('reloadConfig!');
 		if (this._view) {
-			this._view.webview.postMessage({ type: 'clearColors' });
+			this._view.webview.postMessage({ type: 'reloadConfig' });
 		}
 	}
 
@@ -77,13 +85,16 @@ export class ColorsViewProvider implements vscode.WebviewViewProvider {
 				<link href="${styleResetUri}" rel="stylesheet">
 				<link href="${styleVSCodeUri}" rel="stylesheet">
 				<link href="${styleMainUri}" rel="stylesheet">
-				
-				<title>Cat Colors</title>
 			</head>
 			<body>
-				<ul class="color-list">
+				<ul class="command-list">
 				</ul>
-				<button class="add-color-button">Add Color</button>
+				<input class="add-config-text" type="text" placeholder="clang -O3" />
+				<div class="btn-container"> 
+					<button class="config-btn" id="add-config-button">New Config</button>
+					<button class="config-btn" id="delete-config-button">Delete</button>
+					<button class="config-btn" id="compare-button">Compare</button>
+				</div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
