@@ -1,33 +1,44 @@
 import * as vscode from 'vscode';
-import { Core } from './core';
+import { Core, Pass } from './core';
 
 export class PipelineNode {
 	private parent: PipelineNode | null;
 	private children: PipelineNode[] = [];
 	private label: string;
 	private leaf = true;
+	private pass?: Pass;
 
-	constructor(parent: PipelineNode | null, label: string) {
+	constructor(parent: PipelineNode | null, label: string, pass?: Pass) {
 		this.parent = parent;
 		if (parent === null) this.leaf = false;
 		parent?.children.push(this);
 		this.label = label;
+		this.pass = pass;
 	}
 
 	public getChildren(core: Core) {
-		console.log("PipelineNode getChildren");
 		if (this.children.length > 0) {
 			return this.children;
 		}
 		if (core.active) {
 			if (this.label === 'input') {
 				let src = new PipelineNode(this, core.active.command.input);
-				this.children.push(src);
 			}
-			if (this.label === 'output') {
-				
+			if (this.label === 'front end') {
+				let i = new PipelineNode(this, "after preprocessing");
+				let ast = new PipelineNode(this, "Clang AST");
+				let ir = new PipelineNode(this, "LLVM IR");
 			}
-
+			if (this.label === 'middle end') {
+				for (let pass of core.active.passList) {
+					let p = new PipelineNode(this, pass.name, pass);
+				}
+			}
+			if (this.label === 'back end') {
+				for (let pass of core.active.backendList) {
+					let p = new PipelineNode(this, pass.name, pass);
+				}
+			}
 		}
 		return this.children;
 	}
@@ -37,6 +48,24 @@ export class PipelineNode {
 	}
 
 	public getTreeItem(core: Core): vscode.TreeItem {
+		var cmd;
+		if (!this.parent && this.label != 'output') { cmd = void 0; }
+		else {
+			if (this.label === 'output') {
+				cmd = {
+					command: 'llvmPipelineView.openOutput',
+					title: 'Open Output'
+				};
+			} else if (this.pass) {
+				cmd = {
+					command: 'llvmPipelineView.open',
+					arguments: [this.pass],
+					title: 'Open Pipeline Compare View'
+				};
+			}
+			
+		} 
+
 		// An example of how to use codicons in a MarkdownString in a tree item tooltip.
 		const tooltip = new vscode.MarkdownString(`$(zap) Tooltip for ${this.label}`, true);
 		return {
@@ -44,7 +73,8 @@ export class PipelineNode {
 			tooltip,
 			collapsibleState: core.active ? 
 				(this.getChildren(core).length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None) 
-				: vscode.TreeItemCollapsibleState.None
+				: vscode.TreeItemCollapsibleState.None,
+			command: cmd
 		};
 	}
 };
@@ -67,11 +97,9 @@ export class LLVMPipelineTreeDataProvider implements vscode.TreeDataProvider<Pip
 
 	public refresh(): void {
 		this._onDidChangeTreeData.fire();
-		console.log("refresh the data provider");
 	}
 
 	getChildren(element?: PipelineNode): PipelineNode[] {
-		console.log("getChildren", element);
 		if (!element) {
 			return Object.keys(tree).map(key => tree[key]);
 		} else {
@@ -80,7 +108,6 @@ export class LLVMPipelineTreeDataProvider implements vscode.TreeDataProvider<Pip
 	}
 	
 	getTreeItem(element: PipelineNode): vscode.TreeItem {
-		console.log("getTreeItem ", element);
 		return element.getTreeItem(this.core);
 	}
 

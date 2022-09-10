@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import {ConfigViewProvider} from './control-panel';
 import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
-import { Core } from './core';
+import { Core, Pass } from './core';
 
 /** Test whether a directory exists */
 export async function checkDirectoryExists(dirPath: string): Promise<boolean> {
@@ -161,12 +161,42 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('reload config done from vscode-llvm!');
 	});
 
+	const myProvider = new (class implements vscode.TextDocumentContentProvider {
+		provideTextDocumentContent(uri: vscode.Uri) {
+			console.log("provideTextDocumentContent", uri);
+			if (uri.path === '/output') {
+				return core.active?.output;
+			} else if (uri.path.indexOf('/before/') === 0) {
+				return core.active?.passList[Number(uri.path.slice(8))].before_ir;
+			} else if (uri.path.indexOf('/after/') === 0) {
+				return core.active?.passList[Number(uri.path.slice(7))].after_ir;
+			} 
+		}
+	})();
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('vscode-llvm', myProvider));	  
+
+	let openPipelineView = vscode.commands.registerCommand('llvmPipelineView.open', async (...args) => {
+		console.log(args);
+		let pass = args[0] as Pass;
+		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/before/${pass.index}`));
+		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/after/${pass.index}`));
+		console.log("openPipelineView vscode.diff");
+		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
+	});
+
+	let openPipelineOutput = vscode.commands.registerCommand('llvmPipelineView.openOutput', async () => {
+		let doc = await vscode.workspace.openTextDocument( vscode.Uri.parse(`vscode-llvm:/output`) );
+		vscode.window.showTextDocument(doc, {preserveFocus: true, preview: true});
+	});
+
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(openSettings);
 	context.subscriptions.push(pipelineView);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ConfigViewProvider.viewType, provider));
 	context.subscriptions.push(reloadAction);
+	context.subscriptions.push(openPipelineView);
+	context.subscriptions.push(openPipelineOutput);
 }
 
 // this method is called when your extension is deactivated

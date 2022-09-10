@@ -2,14 +2,12 @@ import {Command, CommandEnv} from './clang';
 import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
 
 export class Pass {
-    public name: string;
-    public before_ir: string;
-    public after_ir: string;
-    constructor(name: string, before_ir: string, after_ir: string) {
-        this.name = name;
-        this.before_ir = before_ir;
-        this.after_ir = after_ir;
-    }
+    constructor(
+        public name: string, 
+        public before_ir: string, 
+        public after_ir: string, 
+        public index: number) 
+    {}
 }
 
 export class Pipeline {
@@ -20,6 +18,7 @@ export class Pipeline {
     public input: string = "";
     public output: string = "";
     public passList: Pass[] = [];
+    public backendList: Pass[] = [];
     
     constructor(cmd: string[], cmdEnv: CommandEnv) {
         this.cmdEnv = cmdEnv;
@@ -30,12 +29,33 @@ export class Pipeline {
         const {stdout, stderr} = await this.cmdEnv.runClang(this.command);
         this.output = stdout;
         
-        const re = /^\*\*\* (.+) \*\*\*$/i;
+        const re = /^(# )?\*\*\* (.+) \*\*\*\:?$/m;
         let pass = stderr.split(re);
 
-        console.log("run: " + this.output);
-        console.log(stderr.substring(0, 1000));
-        console.log(pass[0].substring(0,5000));
+        for (let i = 1, j = 0; i < pass.length; i += 6, j++) {
+            let sharp = pass[i];
+            let name = pass[i + 1];
+            let ir = pass[i + 2];
+            let sharp2 = pass[i + 3];
+            let name2 = pass[i + 4];
+            let ir2 = pass[i + 5];
+
+            if (name.substring(15) !== name2.substring(14)) {
+                console.log("name mismatch: " + name + " " + name2);
+            }
+
+            if (sharp === undefined) {
+                if (sharp2 !== undefined) {
+                    console.log("sharp mismatch: " + sharp + " " + sharp2);
+                }
+                this.passList.push(new Pass(name.substring(15), ir, ir2, j));
+            } else {
+                if (sharp !== "# ") {
+                    console.log("sharp mismatch: " + sharp + " " + sharp2);
+                }
+                this.backendList.push(new Pass(name.substring(15), ir, ir2, j));
+            }
+        }
     }
 }
 
@@ -59,7 +79,6 @@ export class Core {
 
         console.log("ensurePipeline: " + cmd + " " + path);
         let real = await cenv.getRealCommand(cmd + " -g -S -mllvm -print-before-all  -mllvm -print-after-all " + path + " -o -");
-        console.log("real: ",real);
 
         let pipeline = new Pipeline(real, cenv);
         this.pipelines.set(cmd + " -g -S " + path + " -o -", pipeline);

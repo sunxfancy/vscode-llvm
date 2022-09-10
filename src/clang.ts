@@ -48,12 +48,12 @@ export class CommandEnv {
 
 
     public async runClang(cmd: Command, env?: Map<string, string>) {
-        console.log("runClang: " + cmd.toString());
+        // console.log("runClang: " + cmd.toString());
         return exec_(cmd.toString());
     }
 
     public async runClangRaw(cmd: string, env?: Map<string, string>) {
-        console.log("runClangRaw: " + cmd);
+        // console.log("runClangRaw: " + cmd);
         return exec_(cmd);
     }
 
