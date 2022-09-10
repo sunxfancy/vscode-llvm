@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import {ConfigViewProvider} from './control-panel';
-import {aNodeWithIdTreeDataProvider} from './pipeline-panel';
+import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
 import { Core } from './core';
 
 /** Test whether a directory exists */
@@ -154,8 +154,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	let core = new Core();
 	const provider = new ConfigViewProvider(context.extensionUri, core);
-	const pipelineView = vscode.window.createTreeView('llvm-pipeline-view', { treeDataProvider: aNodeWithIdTreeDataProvider(core), showCollapseAll: true });
-		
+	const data_provider = new LLVMPipelineTreeDataProvider(core);
+	const pipelineView = vscode.window.createTreeView('llvm-pipeline-view', { treeDataProvider: data_provider, showCollapseAll: true });
 	const reloadAction = vscode.commands.registerCommand('vscode-llvm.reloadConfig', () => {
 		provider.reloadConfig();
 		vscode.window.showInformationMessage('reload config done from vscode-llvm!');
