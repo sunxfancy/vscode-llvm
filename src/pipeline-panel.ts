@@ -1,87 +1,94 @@
 import * as vscode from 'vscode';
 import { Core } from './core';
 
+export class PipelineNode {
+	private parent: PipelineNode | null;
+	private children: PipelineNode[] = [];
+	private label: string;
+	private leaf = true;
 
-const tree: any = {
-	'input': {
-        'main.c': {
-            'B': {}
-        }
-	},
-	'front end': {
-		'ba': {},
-		'bb': {}
-	},
-    'middle end': {
-        'pass1': {},
-        'pass2': {}
-    },
-    'back end': {
-        'pass1': {},
-        'pass2': {}
-    },
-	'output': {
+	constructor(parent: PipelineNode | null, label: string) {
+		this.parent = parent;
+		if (parent === null) this.leaf = false;
+		parent?.children.push(this);
+		this.label = label;
+	}
+
+	public getChildren(core: Core) {
+		console.log("PipelineNode getChildren");
+		if (this.children.length > 0) {
+			return this.children;
+		}
+		if (core.active) {
+			if (this.label === 'input') {
+				let src = new PipelineNode(this, core.active.command.input);
+				this.children.push(src);
+			}
+			if (this.label === 'output') {
+				
+			}
+
+		}
+		return this.children;
+	}
+
+	public getParent() {
+		return this.parent;
+	}
+
+	public getTreeItem(core: Core): vscode.TreeItem {
+		// An example of how to use codicons in a MarkdownString in a tree item tooltip.
+		const tooltip = new vscode.MarkdownString(`$(zap) Tooltip for ${this.label}`, true);
+		return {
+			label: /**vscode.TreeItemLabel**/<any>{ label: this.label },
+			tooltip,
+			collapsibleState: core.active ? 
+				(this.getChildren(core).length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None) 
+				: vscode.TreeItemCollapsibleState.None
+		};
 	}
 };
-const nodes: any = {};
 
-export function aNodeWithIdTreeDataProvider(core: Core): vscode.TreeDataProvider<{ key: string }> {
-	return {
-		getChildren: (element: { key: string }): { key: string }[] => {
-			return getChildren(element ? element.key : undefined).map(key => getNode(key));
-		},
-		getTreeItem: (element: { key: string }): vscode.TreeItem => {
-			const treeItem = getTreeItem(element.key);
-			treeItem.id = element.key;
-			return treeItem;
-		},
-		getParent: ({ key }: { key: string }): { key: string } | undefined => {
-			const parentKey = key.substring(0, key.length - 1);
-			return parentKey ? new Key(parentKey) : undefined;
-		}
-	};
-}
 
-function getChildren(key: string | undefined): string[] {
-	if (!key) {
-		return Object.keys(tree);
+var tree: any = {
+	'input': new PipelineNode(null, 'input'),
+	'front end': new PipelineNode(null, 'front end'),
+	'middle end': new PipelineNode(null, 'middle end'),
+	'back end': new PipelineNode(null, 'back end'),
+	'output': new PipelineNode(null, 'output')
+};
+
+
+export class LLVMPipelineTreeDataProvider implements vscode.TreeDataProvider<PipelineNode> {
+	private core: Core;
+	constructor(core: Core) { this.core = core; core.setProvider(this); }
+	private _onDidChangeTreeData: vscode.EventEmitter<PipelineNode | undefined | null | void> = new vscode.EventEmitter<PipelineNode | undefined | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<PipelineNode | undefined | null | void> = this._onDidChangeTreeData.event;
+
+	public refresh(): void {
+		this._onDidChangeTreeData.fire();
+		console.log("refresh the data provider");
 	}
-	const treeElement = getTreeElement(key);
-	if (treeElement) {
-		return Object.keys(treeElement);
-	}
-	return [];
-}
 
-function getTreeItem(key: string): vscode.TreeItem {
-	const treeElement = getTreeElement(key);
-	// An example of how to use codicons in a MarkdownString in a tree item tooltip.
-	const tooltip = new vscode.MarkdownString(`$(zap) Tooltip for ${key}`, true);
-	return {
-		label: /**vscode.TreeItemLabel**/<any>{ label: key },
-		tooltip,
-		collapsibleState: treeElement && Object.keys(treeElement).length ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
-	};
-}
-
-function getTreeElement(element: string): any {
-	let parent = tree;
-	for (let i = 0; i < element.length; i++) {
-		parent = parent[element.substring(0, i + 1)];
-		if (!parent) {
-			return null;
+	getChildren(element?: PipelineNode): PipelineNode[] {
+		console.log("getChildren", element);
+		if (!element) {
+			return Object.keys(tree).map(key => tree[key]);
+		} else {
+			return element.getChildren(this.core); 
 		}
 	}
-	return parent;
-}
-
-function getNode(key: string): { key: string } {
-	if (!nodes[key]) {
-		nodes[key] = new Key(key);
+	
+	getTreeItem(element: PipelineNode): vscode.TreeItem {
+		console.log("getTreeItem ", element);
+		return element.getTreeItem(this.core);
 	}
-	return nodes[key];
+
+	getParent(element: PipelineNode): PipelineNode | null {
+		return element.getParent();
+	}
 }
 
-class Key {
-	constructor(readonly key: string) { }
+export function getTree() {
+	return tree;
 }
