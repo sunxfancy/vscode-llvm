@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import {ConfigViewProvider} from './control-panel';
-import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
+import {LLVMPipelineTreeDataProvider, LLVMPipelineTreeItemDecorationProvider} from './pipeline-panel';
 import { Core, Pass } from './core';
 
 /** Test whether a directory exists */
@@ -170,16 +170,23 @@ export async function activate(context: vscode.ExtensionContext) {
 				return core.active?.passList[Number(uri.path.slice(8))].before_ir;
 			} else if (uri.path.indexOf('/after/') === 0) {
 				return core.active?.passList[Number(uri.path.slice(7))].after_ir;
-			} 
+			} else if (uri.path.indexOf('/before-b/') === 0) {
+				return core.active?.backendList[Number(uri.path.slice(10))].before_ir;
+			} else if (uri.path.indexOf('/after-b/') === 0) {
+				return core.active?.backendList[Number(uri.path.slice(9))].after_ir;
+			}
 		}
 	})();
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('vscode-llvm', myProvider));	  
 
+	const myDecordator = vscode.window.registerFileDecorationProvider(new LLVMPipelineTreeItemDecorationProvider(core));
+	context.subscriptions.push(myDecordator);
+
 	let openPipelineView = vscode.commands.registerCommand('llvmPipelineView.open', async (...args) => {
 		console.log(args);
 		let pass = args[0] as Pass;
-		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/before/${pass.index}`));
-		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/after/${pass.index}`));
+		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/before${pass.backend?"-b":""}/${pass.index}`));
+		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/after${pass.backend?"-b":""}/${pass.index}`));
 		console.log("openPipelineView vscode.diff");
 		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
 	});

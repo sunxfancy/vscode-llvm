@@ -1,5 +1,35 @@
 import * as vscode from 'vscode';
 import { Core, Pass } from './core';
+import { FileDecoration, FileDecorationProvider, ProviderResult, ThemeColor, Uri } from "vscode";
+
+export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationProvider {
+	constructor(private core: Core) {}
+
+    private readonly dimColor = new ThemeColor("list.deemphasizedForeground");
+
+    public provideFileDecoration(uri: Uri): ProviderResult<FileDecoration>  {
+        if (uri.scheme !== "vscode-llvm") return;
+
+		if (uri.path.indexOf('/before/') === 0) {
+			let k = Number(uri.path.slice(8));
+			if (this.core.active?.passList[k].before_ir == this.core.active?.passList[k].after_ir) {
+				return {
+					color: this.dimColor,
+				}; 
+			}
+		} 
+
+		if (uri.path.indexOf('/before-b/') === 0) {
+			let k = Number(uri.path.slice(10));
+			if (this.core.active?.backendList[k].before_ir == this.core.active?.backendList[k].after_ir) {
+				return {
+					color: this.dimColor,
+				}; 
+			}
+		}
+    }
+}
+
 
 export class PipelineNode {
 	private parent: PipelineNode | null;
@@ -63,7 +93,6 @@ export class PipelineNode {
 					title: 'Open Pipeline Compare View'
 				};
 			}
-			
 		} 
 
 		// An example of how to use codicons in a MarkdownString in a tree item tooltip.
@@ -74,7 +103,8 @@ export class PipelineNode {
 			collapsibleState: core.active ? 
 				(this.getChildren(core).length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None) 
 				: vscode.TreeItemCollapsibleState.None,
-			command: cmd
+			command: cmd,
+			resourceUri: this.pass ? vscode.Uri.parse(`vscode-llvm:/before${this.pass.backend?"-b":""}/${this.pass.index}`) : undefined
 		};
 	}
 };

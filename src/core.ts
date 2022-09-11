@@ -6,8 +6,9 @@ export class Pass {
         public name: string, 
         public before_ir: string, 
         public after_ir: string, 
-        public index: number) 
-    {}
+        public index: number,
+        public backend: boolean) {
+    }
 }
 
 export class Pipeline {
@@ -32,7 +33,7 @@ export class Pipeline {
         const re = /^(# )?\*\*\* (.+) \*\*\*\:?$/m;
         let pass = stderr.split(re);
 
-        for (let i = 1, j = 0; i < pass.length; i += 6, j++) {
+        for (let i = 1; i < pass.length; i += 6) {
             let sharp = pass[i];
             let name = pass[i + 1];
             let ir = pass[i + 2];
@@ -48,12 +49,12 @@ export class Pipeline {
                 if (sharp2 !== undefined) {
                     console.log("sharp mismatch: " + sharp + " " + sharp2);
                 }
-                this.passList.push(new Pass(name.substring(15), ir, ir2, j));
+                this.passList.push(new Pass(name.substring(15), ir, ir2, this.passList.length, false));
             } else {
                 if (sharp !== "# ") {
                     console.log("sharp mismatch: " + sharp + " " + sharp2);
                 }
-                this.backendList.push(new Pass(name.substring(15), ir, ir2, j));
+                this.backendList.push(new Pass(name.substring(15), ir, ir2, this.backendList.length, true));
             }
         }
     }
