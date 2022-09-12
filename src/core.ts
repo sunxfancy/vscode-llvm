@@ -63,6 +63,7 @@ export class Pipeline {
 export class Core {
     private pipelines: Map<string, Pipeline> = new Map();
     public active?: Pipeline;
+    public activeCmd: string | undefined;
     private provider?: LLVMPipelineTreeDataProvider;
 
     public setProvider(provider: LLVMPipelineTreeDataProvider) {
@@ -86,6 +87,11 @@ export class Core {
         await pipeline.run();
         this.active = pipeline;
         this.provider?.refresh();
+    }
+
+    // run debug-only for a pass and filiter the output for that one
+    public async debugOnePass(pass: Pass) {
+
     }
 
     public async ensureComparePipeline(cmd: Command, cmd2: Command) {

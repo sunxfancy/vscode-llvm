@@ -6,6 +6,9 @@ import * as fs from 'fs';
 import {ConfigViewProvider} from './control-panel';
 import {LLVMPipelineTreeDataProvider, LLVMPipelineTreeItemDecorationProvider} from './pipeline-panel';
 import { Core, Pass } from './core';
+import { CommandEnv } from './clang';
+import { Debug } from './debug';
+import { debug } from 'console';
 
 /** Test whether a directory exists */
 export async function checkDirectoryExists(dirPath: string): Promise<boolean> {
@@ -161,6 +164,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('reload config done from vscode-llvm!');
 	});
 
+	
 	const myProvider = new (class implements vscode.TextDocumentContentProvider {
 		provideTextDocumentContent(uri: vscode.Uri) {
 			console.log("provideTextDocumentContent", uri);
@@ -177,7 +181,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 		}
 	})();
-	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('vscode-llvm', myProvider));	  
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('vscode-llvm', myProvider));
 
 	const myDecordator = vscode.window.registerFileDecorationProvider(new LLVMPipelineTreeItemDecorationProvider(core));
 	context.subscriptions.push(myDecordator);
@@ -195,6 +199,23 @@ export async function activate(context: vscode.ExtensionContext) {
 		let doc = await vscode.workspace.openTextDocument( vscode.Uri.parse(`vscode-llvm:/output`) );
 		vscode.window.showTextDocument(doc, {preserveFocus: true, preview: true});
 	});
+
+	let openPipeline = vscode.commands.registerCommand('llvmPipelineView.run', async (...args) => {
+		if (vscode.window.activeTextEditor && core.activeCmd) {
+			let path = vscode.window.activeTextEditor.document.uri.path;
+			core.ensurePipeline(core.activeCmd, path, new CommandEnv());
+		}
+	});
+
+	
+	let debugPipeline = vscode.commands.registerCommand('llvmPipelineView.run-debug', async (...args) => {
+		if (vscode.window.activeTextEditor && core.activeCmd) {
+			let path = vscode.window.activeTextEditor.document.uri.path;
+			let debugConfig = new Debug();
+			debugConfig.saveConfig(core.active);
+		}
+	});
+	
 
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(openSettings);
