@@ -191,6 +191,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		let pass = args[0] as Pass;
 		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/before${pass.backend?"-b":""}/${pass.index}`));
 		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/after${pass.backend?"-b":""}/${pass.index}`));
+		vscode.languages.setTextDocumentLanguage(doc, 'llvm');
+		vscode.languages.setTextDocumentLanguage(doc2, 'llvm');
 		console.log("openPipelineView vscode.diff");
 		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
 	});
@@ -209,7 +211,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	
 	let debugPipeline = vscode.commands.registerCommand('llvmPipelineView.run-debug', async (...args) => {
-		if (vscode.window.activeTextEditor && core.activeCmd) {
+		if (vscode.window.activeTextEditor && core.activeCmd && core.active) {
 			let path = vscode.window.activeTextEditor.document.uri.path;
 			let debugConfig = new Debug();
 			debugConfig.saveConfig(core.active);
