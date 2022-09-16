@@ -1,6 +1,6 @@
 import {Command, CommandEnv} from './clang';
 import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
-
+import * as vscode from 'vscode';
 export class Pass {
     constructor(
         public name: string, 
@@ -10,6 +10,7 @@ export class Pass {
         public backend: boolean) {
     }
 }
+
 
 export class Pipeline {
     public isCompare: boolean = false;
@@ -29,10 +30,13 @@ export class Pipeline {
     public async run() {
         const {stdout, stderr} = await this.cmdEnv.runClang(this.command);
         this.output = stdout;
-        
-        const re = /^(# )?\*\*\* (.+) \*\*\*\:?$/m;
-        let pass = stderr.split(re);
+        this.parseLLVMDump(stderr);
+    }
 
+    public parseLLVMDump(data: string) {
+        const re = /^(# )?\*\*\* (.+) \*\*\*\:?$/m;
+        let pass = data.split(re);
+    
         for (let i = 1; i < pass.length; i += 6) {
             let sharp = pass[i];
             let name = pass[i + 1];
@@ -40,11 +44,11 @@ export class Pipeline {
             let sharp2 = pass[i + 3];
             let name2 = pass[i + 4];
             let ir2 = pass[i + 5];
-
+    
             if (name.substring(15) !== name2.substring(14)) {
                 console.log("name mismatch: " + name + " " + name2);
             }
-
+    
             if (sharp === undefined) {
                 if (sharp2 !== undefined) {
                     console.log("sharp mismatch: " + sharp + " " + sharp2);
@@ -58,6 +62,7 @@ export class Pipeline {
             }
         }
     }
+    
 }
 
 export class Core {
@@ -98,4 +103,29 @@ export class Core {
 
     }
 
+}
+
+
+export class PipelineContentProvider implements vscode.TextDocumentContentProvider {
+    constructor(private core: Core, subscriptions: vscode.Disposable[]) {
+        subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
+            PipelineContentProvider.scheme, this));
+    }
+
+    public static readonly scheme = 'vscode-llvm';
+    
+    provideTextDocumentContent(uri: vscode.Uri) {
+        console.log("provideTextDocumentContent", uri);
+        if (uri.path === '/output') {
+            return this.core.active?.output;
+        } else if (uri.path.indexOf('/before/') === 0) {
+            return this.core.active?.passList[Number(uri.path.slice(8))].before_ir;
+        } else if (uri.path.indexOf('/after/') === 0) {
+            return this.core.active?.passList[Number(uri.path.slice(7))].after_ir;
+        } else if (uri.path.indexOf('/before-b/') === 0) {
+            return this.core.active?.backendList[Number(uri.path.slice(10))].before_ir;
+        } else if (uri.path.indexOf('/after-b/') === 0) {
+            return this.core.active?.backendList[Number(uri.path.slice(9))].after_ir;
+        }
+    }
 }

@@ -2,15 +2,18 @@ import * as vscode from 'vscode';
 import { Core, Pass } from './core';
 import { FileDecoration, FileDecorationProvider, ProviderResult, ThemeColor, Uri } from "vscode";
 
+/** This class will decorate the tree view and dim the item when the IRs are same */
 export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationProvider {
-	constructor(private core: Core) {}
+	constructor(private core: Core, subscriptions: vscode.Disposable[]) {
+		subscriptions.push(vscode.window.registerFileDecorationProvider(this));
+	}
 
     private readonly dimColor = new ThemeColor("list.deemphasizedForeground");
 
     public provideFileDecoration(uri: Uri): ProviderResult<FileDecoration>  {
         if (uri.scheme !== "vscode-llvm") return;
 
-		if (uri.path.indexOf('/before/') === 0) {
+		if (uri.path.startsWith('/before/')) {
 			let k = Number(uri.path.slice(8));
 			if (this.core.active?.passList[k].before_ir == this.core.active?.passList[k].after_ir) {
 				return {
@@ -19,7 +22,7 @@ export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationPro
 			}
 		} 
 
-		if (uri.path.indexOf('/before-b/') === 0) {
+		if (uri.path.startsWith('/before-b/')) {
 			let k = Number(uri.path.slice(10));
 			if (this.core.active?.backendList[k].before_ir == this.core.active?.backendList[k].after_ir) {
 				return {
@@ -32,18 +35,18 @@ export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationPro
 
 
 export class PipelineNode {
-	private parent: PipelineNode | null;
 	private children: PipelineNode[] = [];
-	private label: string;
-	private leaf = true;
-	private pass?: Pass;
 
-	constructor(parent: PipelineNode | null, label: string, pass?: Pass) {
-		this.parent = parent;
-		if (parent === null) this.leaf = false;
+	constructor(
+		private label: string, 
+		private parent?: PipelineNode, 
+		private pass?: Pass) 
+	{
 		parent?.children.push(this);
-		this.label = label;
-		this.pass = pass;
+	}
+
+	public isLeaf() {
+		return this.getParent() ? true : false;
 	}
 
 	public getChildren(core: Core) {
@@ -52,21 +55,21 @@ export class PipelineNode {
 		}
 		if (core.active) {
 			if (this.label === 'input') {
-				let src = new PipelineNode(this, core.active.command.input);
+				let src = new PipelineNode(core.active.command.input, this);
 			}
 			if (this.label === 'front end') {
-				let i = new PipelineNode(this, "after preprocessing");
-				let ast = new PipelineNode(this, "Clang AST");
-				let ir = new PipelineNode(this, "LLVM IR");
+				let i = new PipelineNode("after preprocessing", this);
+				let ast = new PipelineNode("Clang AST", this);
+				let ir = new PipelineNode("LLVM IR", this);
 			}
 			if (this.label === 'middle end') {
 				for (let pass of core.active.passList) {
-					let p = new PipelineNode(this, pass.name, pass);
+					let p = new PipelineNode(pass.name, this, pass);
 				}
 			}
 			if (this.label === 'back end') {
 				for (let pass of core.active.backendList) {
-					let p = new PipelineNode(this, pass.name, pass);
+					let p = new PipelineNode(pass.name, this, pass);
 				}
 			}
 		}
@@ -79,7 +82,7 @@ export class PipelineNode {
 
 	public getTreeItem(core: Core): vscode.TreeItem {
 		var cmd;
-		if (!this.parent && this.label != 'output') { cmd = void 0; }
+		if (!this.getParent() && this.label != 'output') { cmd = void 0; }
 		else {
 			if (this.label === 'output') {
 				cmd = {
@@ -110,20 +113,14 @@ export class PipelineNode {
 };
 
 
-var tree: any = {
-	'input': new PipelineNode(null, 'input'),
-	'front end': new PipelineNode(null, 'front end'),
-	'middle end': new PipelineNode(null, 'middle end'),
-	'back end': new PipelineNode(null, 'back end'),
-	'output': new PipelineNode(null, 'output')
-};
-
-
 export class LLVMPipelineTreeDataProvider implements vscode.TreeDataProvider<PipelineNode> {
-	private core: Core;
-	constructor(core: Core) { this.core = core; core.setProvider(this); }
-	private _onDidChangeTreeData: vscode.EventEmitter<PipelineNode | undefined | null | void> = new vscode.EventEmitter<PipelineNode | undefined | null | void>();
-	readonly onDidChangeTreeData: vscode.Event<PipelineNode | undefined | null | void> = this._onDidChangeTreeData.event;
+	constructor(private core: Core, subscriptions: vscode.Disposable[]) { 
+		core.setProvider(this); 
+		subscriptions.push(vscode.window.createTreeView(
+			'llvm-pipeline-view', { treeDataProvider: this, showCollapseAll: true }));
+	}
+	private _onDidChangeTreeData = new vscode.EventEmitter<PipelineNode | undefined | null | void>();
+	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
 	public refresh(): void {
 		this._onDidChangeTreeData.fire();
@@ -131,7 +128,7 @@ export class LLVMPipelineTreeDataProvider implements vscode.TreeDataProvider<Pip
 
 	getChildren(element?: PipelineNode): PipelineNode[] {
 		if (!element) {
-			return Object.keys(tree).map(key => tree[key]);
+			return LLVMPipelineTreeDataProvider.tree_nodes;
 		} else {
 			return element.getChildren(this.core); 
 		}
@@ -141,11 +138,16 @@ export class LLVMPipelineTreeDataProvider implements vscode.TreeDataProvider<Pip
 		return element.getTreeItem(this.core);
 	}
 
-	getParent(element: PipelineNode): PipelineNode | null {
+	getParent(element: PipelineNode) {
 		return element.getParent();
 	}
+
+	static readonly tree_nodes = [
+		new PipelineNode('input'),
+		new PipelineNode('front end'),
+		new PipelineNode('middle end'),
+		new PipelineNode('back end'),
+		new PipelineNode('output')
+	];
 }
 
-export function getTree() {
-	return tree;
-}
