@@ -34,7 +34,7 @@ export class ConfigViewProvider implements vscode.WebviewViewProvider {
 					break;
 				}
 				case 'compare': {
-
+					break;
 				}
 			}
 		});

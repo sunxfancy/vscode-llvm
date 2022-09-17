@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as util from 'util';
 import * as vscode from 'vscode';
 import { exec, spawn } from 'child_process';
-const exec_ = util.promisify(exec);
 
 
 export class Command {
@@ -48,13 +47,30 @@ export class CommandEnv {
 
 
     public async runClang(cmd: Command, env?: Map<string, string>) {
-        // console.log("runClang: " + cmd.toString());
-        return exec_(cmd.toString());
+        return this.runClangRaw(cmd.toString(), env);
     }
 
-    public async runClangRaw(cmd: string, env?: Map<string, string>) {
-        // console.log("runClangRaw: " + cmd);
-        return exec_(cmd);
+    public async runClangRaw(cmd: string, env?: Map<string, string>): Promise<{stdout: string, stderr: string}> {
+        let args = cmd.split(" ");
+        let exe = args[0];
+        args.shift();
+        return new Promise((resolve, reject) => {
+            let stderr: string[] = [];
+            let stdout: string[] = [];
+            const run = spawn(exe, args);
+            run.stderr.on('data', (data) => {
+                stderr.push(data);
+            });
+            run.stdout.on('data', (data) => {
+                stdout.push(data);
+            });
+            run.on('close', (code) => {
+                resolve({stdout: stdout.join(""), stderr: stderr.join("")});
+            });
+            run.on('error', (err) => {
+                reject(err);
+            });
+        });
     }
 
     public async runOPT(args: string[], output?: string, env?: Map<string, string>): Promise<any|undefined>  {
@@ -76,10 +92,15 @@ export class CommandEnv {
 
     public async getRealCommand(args: string, env?: Map<string, string>): Promise<string[]> {
         const {stdout, stderr} = await this.runClangRaw(args + " -###", env);
-        console.log(stdout, stderr);
+        console.log("stderr of get real command: ", stdout, stderr);
         if (stderr !== "") {
-            let lines = stderr.split("\n");
-            let realCommand = lines[5].trim();
+            let lines = stderr.split(/\r?\n/);
+            let realCommand = lines[4].trim();
+            console.log("realCommand: " + realCommand);
+            return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
+        } else if (stdout !== "") {
+            let lines = stdout.split(/\r?\n/);
+            let realCommand = lines[4].trim();
             console.log("realCommand: " + realCommand);
             return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
         } else {

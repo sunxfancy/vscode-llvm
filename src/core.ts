@@ -94,6 +94,30 @@ export class Core {
         this.provider?.refresh();
     }
 
+    public async ensurePipelineLTO(cmd: string, cenv: CommandEnv) {
+        if (this.pipelines.has(cmd + " -S ")) {
+            this.active = this.pipelines.get(cmd + " -S ");
+            this.provider?.refresh();
+            return;
+        }
+
+        let index = cmd.indexOf(" ");
+        let args0 = cmd.substring(0, index);
+        let args = cmd.substring(index+1);
+        cmd = args0 + " -save-temps -Wl,-mllvm -Wl,-print-before-all -Wl,-mllvm -Wl,-print-after-all" + args;
+
+        console.log("ensurePipelineLTO: " + cmd); 
+        
+        let real = await cenv.getRealCommand(cmd);
+
+        let pipeline = new Pipeline(real, cenv);
+        this.pipelines.set(cmd + " -S ", pipeline);
+        await pipeline.run();
+        this.active = pipeline;
+        this.provider?.refresh();
+    }
+
+
     // run debug-only for a pass and filiter the output for that one
     public async debugOnePass(pass: Pass) {
 
