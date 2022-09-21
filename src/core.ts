@@ -89,8 +89,8 @@ export class Core {
 
         let pipeline = new Pipeline(real, cenv);
         this.pipelines.set(cmd + " -g -S " + path + " -o -", pipeline);
-        await pipeline.run();
         this.active = pipeline;
+        await this.runWithProgress();
         this.provider?.refresh();
     }
 
@@ -112,9 +112,22 @@ export class Core {
 
         let pipeline = new Pipeline(real, cenv);
         this.pipelines.set(cmd + " -S ", pipeline);
-        await pipeline.run();
         this.active = pipeline;
+        await this.runWithProgress();
         this.provider?.refresh();
+    }
+
+    public async runWithProgress() {
+        let pipeline = this.active;
+        return vscode.window.withProgress({
+            location: vscode.ProgressLocation.Window,
+            cancellable: false,
+            title: 'Run Clang Command'
+        }, async (progress) => {
+            progress.report({  increment: 0 });
+            if (pipeline) await pipeline.run();
+            progress.report({ increment: 100 });
+        });
     }
 
 
