@@ -36,6 +36,16 @@ export class ConfigViewProvider implements vscode.WebviewViewProvider {
 				case 'compare': {
 					break;
 				}
+				case 'new': {
+					vscode.window.showInputBox({ prompt: 'Enter a new command' }).then(command => {
+						this.addConfig(command as string);
+					});
+					break;
+				}
+				case 'update-filter': {
+					this.core.filter = data.value;
+					break;
+				}
 			}
 		});
 	}
@@ -43,7 +53,7 @@ export class ConfigViewProvider implements vscode.WebviewViewProvider {
 	public addConfig(command: string) {
 		if (this.view) {
 			this.view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-			this.view.webview.postMessage({ type: 'addConfig' });
+			this.view.webview.postMessage({ type: 'addConfig', value: command });
 		}
 	}
 
@@ -83,7 +93,7 @@ export class ConfigViewProvider implements vscode.WebviewViewProvider {
 			<body>
 				<ul class="command-list">
 				</ul>
-				<input class="add-config-text" type="text" placeholder="clang -O3" />
+				<input class="filter-text" type="text" placeholder="filter functions" />
 				<div class="btn-container"> 
 					<button class="config-btn" id="add-config-button">New Config</button>
 					<button class="config-btn" id="delete-config-button">Delete</button>

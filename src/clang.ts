@@ -90,19 +90,25 @@ export class CommandEnv {
         return ['-g', '-S'];
     }    
 
+    private findCommand(cmd: string): string[] {
+        let lines = cmd.split(/\r?\n/);
+        let realCommand = lines[4].trim();
+        let k = 5;
+        while (!realCommand.startsWith("\"") && k < lines.length) {
+            realCommand = lines[k++].trim();
+        }
+        console.log("realCommand: " + realCommand);
+        return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
+    }
+
     public async getRealCommand(args: string, env?: Map<string, string>): Promise<string[]> {
+        console.log("runClangRaw: " + args + " -###");
         const {stdout, stderr} = await this.runClangRaw(args + " -###", env);
         console.log("stderr of get real command: ", stdout, stderr);
         if (stderr !== "") {
-            let lines = stderr.split(/\r?\n/);
-            let realCommand = lines[4].trim();
-            console.log("realCommand: " + realCommand);
-            return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
+            return this.findCommand(stderr);
         } else if (stdout !== "") {
-            let lines = stdout.split(/\r?\n/);
-            let realCommand = lines[4].trim();
-            console.log("realCommand: " + realCommand);
-            return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
+            return this.findCommand(stdout);
         } else {
             return [];
         }

@@ -3,10 +3,11 @@
 (function () {
     const vscode = acquireVsCodeApi();
 
-    const oldState = vscode.getState() || { configs: [] };
+    const oldState = vscode.getState() || { configs: [], filter: '' };
 
     /** @type {Array<{ value: string }>} */
-    let configs = oldState.configs;
+    let configs = oldState.configs || [];
+    let filter = oldState.filter;
 
     updateCommandList(configs);
 
@@ -22,6 +23,14 @@
         runCompare();
     });
 
+    let text_box = document.querySelector('.filter-text');
+    text_box.value = filter;
+    text_box.addEventListener('keyup', (e) => {
+        filter = text_box.value;
+        vscode.postMessage({ type: 'update-filter', value: filter });
+        vscode.setState({ configs: configs, filter: filter });
+    });
+
     // Handle messages sent from the extension to the webview
     window.addEventListener('message', event => {
         const message = event.data; // The json data that the extension sent
@@ -32,6 +41,11 @@
             }
             case 'reloadConfig': {
                 configs = [];
+                updateCommandList(configs);
+                break;
+            }
+            case 'addConfig': {
+                configs.push({ value: message.value });
                 updateCommandList(configs);
                 break;
             }
@@ -99,7 +113,7 @@
         }
 
         // Update the saved state
-        vscode.setState({ configs: configs });
+        vscode.setState({ configs: configs, filter: filter });
     }
 
     /** 
@@ -118,10 +132,7 @@
     }
 
     function addConfig() {
-        const command = document.querySelector('.add-config-text').value;
-        console.log("addConfig: ", command);
-        configs.push({ value: (command === '')? 'clang -O3': command });
-        updateCommandList(configs);
+        vscode.postMessage({ type: 'new' });
     }
 
     function deleteConfig() {

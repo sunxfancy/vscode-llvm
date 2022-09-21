@@ -70,6 +70,7 @@ export class Core {
     public active?: Pipeline;
     public activeCmd: string | undefined;
     private provider?: LLVMPipelineTreeDataProvider;
+    public filter = "";
 
     public setProvider(provider: LLVMPipelineTreeDataProvider) {
         this.provider = provider;
@@ -85,7 +86,11 @@ export class Core {
         }
 
         console.log("ensurePipeline: " + cmd + " " + path);
-        let real = await cenv.getRealCommand(cmd + " -g -S -mllvm -print-before-all  -mllvm -print-after-all " + path + " -o -");
+        let filter = "";
+        if (this.filter !== "") {
+            filter = " -mllvm -filter-print-funcs=" + this.filter + " ";
+        }
+        let real = await cenv.getRealCommand(cmd + " -g -S -mllvm -print-before-all  -mllvm -print-after-all " + filter + path + " -o -");
 
         let pipeline = new Pipeline(real, cenv);
         this.pipelines.set(cmd + " -g -S " + path + " -o -", pipeline);
@@ -104,7 +109,11 @@ export class Core {
         let index = cmd.indexOf(" ");
         let args0 = cmd.substring(0, index);
         let args = cmd.substring(index+1);
-        cmd = args0 + " -save-temps -Wl,-mllvm -Wl,-print-before-all -Wl,-mllvm -Wl,-print-after-all" + args;
+        let filter = "";
+        if (this.filter !== "") {
+            filter = " -Wl,-mllvm -Wl,-filter-print-funcs=" + this.filter + " ";
+        }
+        cmd = args0 + " -save-temps -Wl,-mllvm -Wl,-print-before-all -Wl,-mllvm -Wl,-print-after-all" + filter + args;
 
         console.log("ensurePipelineLTO: " + cmd); 
         
