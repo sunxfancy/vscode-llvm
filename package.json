@@ -1,8 +1,12 @@
 {
   "name": "vscode-llvm",
-  "displayName": "vscode-llvm",
-  "description": "a tool for LLVM developer",
-  "version": "0.0.1",
+  "displayName": "VSCode LLVM Compiler Explorer",
+  "description": "A tool for LLVM pass developer",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunxfancy/vscode-llvm.git"
+  },
   "engines": {
     "vscode": "^1.69.0"
   },
@@ -102,7 +106,7 @@
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "16.x",
-    "@types/vscode": "^1.71.0",
+    "@types/vscode": "^1.69.0",
     "@types/which": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
