@@ -36,10 +36,14 @@ export class Command {
 
 export class CommandEnv {
     constructor(llvmPath?: string, workDir?: string, env?: Map<string, string>) {
-        if (llvmPath) { this.llvmPath = llvmPath; }
-        else { this.llvmPath = path.dirname(which.sync('clang')); }
-        if (workDir) { this.workdir = workDir; }
-        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        if (llvmPath) { 
+            this.llvmPath = llvmPath; 
+        } else { 
+            this.llvmPath = path.dirname(which.sync('clang')); 
+        }
+        if (workDir) { 
+            this.workdir = workDir; 
+        } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
             this.workdir = vscode.workspace.workspaceFolders[0].uri.fsPath;
         }
         if (env) { this.env = env; }

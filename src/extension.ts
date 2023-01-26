@@ -175,7 +175,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	let openPipeline = vscode.commands.registerCommand('llvmPipelineView.run', async (...args) => {
 		if (core.activeCmd) {
-			let cmdEnv = new CommandEnv();
+			core.activeCmd = core.activeCmd.trim();
+			console.log("run: " + core.activeCmd);
+			let llvm_dir = path.dirname(core.activeCmd.slice(0, core.activeCmd.indexOf(' ')-1));
+			console.log("llvm_dir: ", llvm_dir);
+			let cmdEnv = new CommandEnv(llvm_dir);
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 				process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
 			console.log("current dir:", process.cwd());
