@@ -2,12 +2,12 @@
   "name": "vscode-llvm",
   "displayName": "VSCode LLVM Compiler Explorer",
   "description": "A tool for LLVM pass developer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/sunxfancy/vscode-llvm.git"
   },
-  "publisher": "XiaofanSun",
+  "publisher": "Xiaofan Sun",
   "engines": {
     "vscode": "^1.69.0"
   },
@@ -15,17 +15,12 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:vscode-llvm.helloWorld",
     "onView:llvm-pipeline-view",
     "onView:llvm-pass-view"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "vscode-llvm.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "llvmPipelineView.settings",
         "title": "LLVM Pipeline View Settings",

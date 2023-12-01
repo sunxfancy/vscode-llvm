@@ -1,3 +1,4 @@
+import { readFile, readFileSync } from 'fs';
 import {Command, CommandEnv} from './clang';
 import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
 import * as vscode from 'vscode';
@@ -19,6 +20,10 @@ export class Pipeline {
 
     public input: string = "";
     public output: string = "";
+    public ast: string = "";
+    public preprocessed: string = "";
+    public llvm: string = "";
+
     public passList: Pass[] = [];
     public backendList: Pass[] = [];
     
@@ -31,6 +36,12 @@ export class Pipeline {
         const {stdout, stderr} = await this.cmdEnv.runClang(this.command);
         this.output = stdout;
         this.parseLLVMDump(stderr);
+        
+        let index = this.command.input.lastIndexOf('.');
+        let path = this.command.input.substring(0, index);
+        
+        this.preprocessed = readFileSync(path + ".i").toString();
+        this.llvm = readFileSync(path + ".ll").toString();
     }
 
     public parseLLVMDump(data: string) {
@@ -164,6 +175,12 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
         console.log("provideTextDocumentContent", uri);
         if (uri.path === '/output') {
             return this.core.active?.output;
+        } else if (uri.path === '/ast') {
+            return this.core.active?.ast;
+        } else if (uri.path === '/preprocessed') {
+            return this.core.active?.preprocessed;
+        } else if (uri.path === '/llvm') {
+            return this.core.active?.llvm;
         } else if (uri.path.indexOf('/before/') === 0) {
             return this.core.active?.passList[Number(uri.path.slice(8))].before_ir;
         } else if (uri.path.indexOf('/after/') === 0) {

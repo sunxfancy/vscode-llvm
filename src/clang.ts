@@ -1,6 +1,6 @@
 import which = require("which");
 import * as path from 'path';
-import * as util from 'util';
+import { parseShellArg } from './utils';
 import * as vscode from 'vscode';
 import { exec, spawn } from 'child_process';
 
@@ -29,8 +29,8 @@ export class Command {
     }
 
     public toString() {
-        return this.exe + " " + this.args.join(" ") + " -o " + this.output 
-                + " -x " + this.language + " " + this.input; 
+        return "\"" + this.exe + "\" \"" + this.args.join("\" \"") + "\" \"-o\" \"" + this.output 
+                + "\" \"-x\" \"" + this.language + "\" \"" + this.input + "\""; 
     }
 }
 
@@ -55,7 +55,12 @@ export class CommandEnv {
     }
 
     public async runClangRaw(cmd: string, env?: Map<string, string>): Promise<{stdout: string, stderr: string}> {
-        let args = cmd.split(" ");
+        console.log(cmd);
+        let raw_args = parseShellArg(cmd);
+        if (raw_args == null) {
+            return {stdout: "", stderr: ""};
+        }
+        let args: string[] = raw_args;
         let exe = args[0];
         args.shift();
         return new Promise((resolve, reject) => {
@@ -102,7 +107,8 @@ export class CommandEnv {
             realCommand = lines[k++].trim();
         }
         console.log("realCommand: " + realCommand);
-        return realCommand.split(" ").map((value) => { return value.substring(1, value.length - 1); });
+        realCommand = realCommand.substring(1, realCommand.length - 1);
+        return realCommand.split("\" \"");
     }
 
     public async getRealCommand(args: string, env?: Map<string, string>): Promise<string[]> {

@@ -33,7 +33,9 @@ export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationPro
     }
 }
 
-
+/**
+ * This class provides the content for the tree view.
+ */
 export class PipelineNode {
 	private children: PipelineNode[] = [];
 
@@ -94,6 +96,21 @@ export class PipelineNode {
 					command: 'llvmPipelineView.open',
 					arguments: [this.pass],
 					title: 'Open Pipeline Compare View'
+				};
+			} else if (this.label === 'after preprocessing') {
+				cmd = {
+					command: 'llvmPipelineView.openPreprocessed',
+					title: 'Open Preprocessed'
+				};
+			} else if (this.label === 'Clang AST') {
+				cmd = {
+					command: 'llvmPipelineView.openAST',
+					title: 'Open AST'
+				};
+			} else if (this.label === 'LLVM IR') {
+				cmd = {
+					command: 'llvmPipelineView.openLLVM',
+					title: 'Open LLVM IR'
 				};
 			}
 		} 

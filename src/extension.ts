@@ -173,6 +173,21 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.showTextDocument(doc, {preserveFocus: true, preview: true});
 	});
 
+	let openAST = vscode.commands.registerCommand('llvmPipelineView.openAST', async () => {
+		let doc = await vscode.workspace.openTextDocument( vscode.Uri.parse(`vscode-llvm:/ast`) );
+		vscode.window.showTextDocument(doc, {preserveFocus: true, preview: true});
+	});
+
+	let openPreprocessed = vscode.commands.registerCommand('llvmPipelineView.openPreprocessed', async () => {
+		let doc = await vscode.workspace.openTextDocument( vscode.Uri.parse(`vscode-llvm:/preprocessed`) );
+		vscode.window.showTextDocument(doc, {preserveFocus: true, preview: true});
+	});
+
+	let openLLVM = vscode.commands.registerCommand('llvmPipelineView.openLLVM', async () => {
+		let doc = await vscode.workspace.openTextDocument( vscode.Uri.parse(`vscode-llvm:/llvm`) );
+		vscode.window.showTextDocument(doc, {preserveFocus: true, preview: true});
+	});
+
 	let openPipeline = vscode.commands.registerCommand('llvmPipelineView.run', async (...args) => {
 		if (core.activeCmd) {
 			core.activeCmd = core.activeCmd.trim();
@@ -214,7 +229,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		openSettings, openPipeline, debugPipeline,
-		reloadAction, openPipelineView, openPipelineOutput
+		reloadAction, openPipelineView, openPipelineOutput,
+		openAST, openPreprocessed, openLLVM
 	);
 }
 

@@ -8,3 +8,5 @@ This is a tool for compiler developers of LLVM. This vscode extension can suppor
 2. Compare difference between IRs before and after running a pass.
 3. Support custom clang or modified version.
 
+## How to use
+

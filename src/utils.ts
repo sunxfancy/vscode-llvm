@@ -67,3 +67,10 @@ export function getNonce() {
 	}
 	return text;
 }
+
+// --------------------------------------------------------------
+
+export function parseShellArg(str: string): string[] | undefined {
+    return str.match(/"([^"]+)"|'([^']+)'|\S+/g)?.map(
+        x => (x[0] == '\"' ||  x[0] == '\'') ? x.substring(1, x.length - 1) : x);
+}
