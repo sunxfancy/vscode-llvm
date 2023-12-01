@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/sunxfancy/vscode-llvm.git"
   },
-  "publisher": "Xiaofan Sun",
+  "publisher": "XiaofanSun",
   "engines": {
     "vscode": "^1.69.0"
   },
