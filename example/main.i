@@ -5,52 +5,52 @@
 # 1 "<command line>" 1
 # 1 "<built-in>" 2
 # 1 "main.c" 2
-# 1 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 1 3
-# 12 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
-# 1 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 1 3
-# 10 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
-# 1 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 1 3
-# 57 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
-# 1 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\sal.h" 1 3
-# 2974 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\sal.h" 3
-# 1 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\concurrencysal.h" 1 3
-# 2975 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\sal.h" 2 3
-# 58 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 2 3
-# 1 "C:\\\\Program Files\\\\LLVM\\\\lib\\\\clang\\\\16\\\\include\\vadefs.h" 1 3
-# 18 "C:\\\\Program Files\\\\LLVM\\\\lib\\\\clang\\\\16\\\\include\\vadefs.h" 3
-# 1 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 1 3
-# 15 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 3
+# 1 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 1 3
+# 12 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
+# 1 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 1 3
+# 10 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
+# 1 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 1 3
+# 57 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
+# 1 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\sal.h" 1 3
+# 2974 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\sal.h" 3
+# 1 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\concurrencysal.h" 1 3
+# 2975 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\sal.h" 2 3
+# 58 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 2 3
+# 1 "C:\\Program Files\\LLVM\\lib\\clang\\16\\include\\vadefs.h" 1 3
+# 18 "C:\\Program Files\\LLVM\\lib\\clang\\16\\include\\vadefs.h" 3
+# 1 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 1 3
+# 15 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 3
 #pragma pack(push, 8)
-# 47 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 3
+# 47 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 3
 #pragma warning(push)
 #pragma warning(disable: 4514 4820)
-# 61 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 3
+# 61 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 3
         typedef unsigned __int64 uintptr_t;
-# 72 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 3
+# 72 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 3
         typedef char* va_list;
-# 155 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 3
+# 155 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 3
     void __cdecl __va_start(va_list* , ...);
-# 207 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vadefs.h" 3
+# 207 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vadefs.h" 3
 #pragma warning(pop)
 #pragma pack(pop)
-# 19 "C:\\\\Program Files\\\\LLVM\\\\lib\\\\clang\\\\16\\\\include\\vadefs.h" 2 3
-# 59 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 2 3
+# 19 "C:\\Program Files\\LLVM\\lib\\clang\\16\\include\\vadefs.h" 2 3
+# 59 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 2 3
 
 #pragma warning(push)
 #pragma warning(disable: 4514 4820)
-# 96 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
+# 96 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
 #pragma pack(push, 8)
-# 193 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
+# 193 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
     typedef unsigned __int64 size_t;
     typedef __int64 ptrdiff_t;
     typedef __int64 intptr_t;
-# 209 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
+# 209 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
     typedef _Bool __vcrt_bool;
-# 228 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
+# 228 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
     typedef unsigned short wchar_t;
-# 377 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
+# 377 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
     void __cdecl __security_init_cookie(void);
-# 386 "C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\VC\\\\Tools\\\\MSVC\\\\14.36.32532\\\\include\\vcruntime.h" 3
+# 386 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\include\\vcruntime.h" 3
         void __cdecl __security_check_cookie( uintptr_t _StackCookie);
         __declspec(noreturn) void __cdecl __report_gsfailure( uintptr_t _StackCookie);
 
@@ -67,24 +67,24 @@ extern uintptr_t __security_cookie;
 #pragma pack(pop)
 
 #pragma warning(pop)
-# 11 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 2 3
-# 121 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 11 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 2 3
+# 121 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 #pragma warning(push)
 #pragma warning(disable: 4324 4514 4574 4710 4793 4820 4995 4996 28719 28726 28727)
 #pragma clang diagnostic push
-# 123 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 123 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-# 123 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 123 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 #pragma clang diagnostic ignored "-Wignored-attributes"
-# 123 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 123 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 #pragma clang diagnostic ignored "-Wignored-pragma-optimize"
-# 123 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 123 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 
 #pragma pack(push, 8)
-# 274 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 274 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
     typedef _Bool __crt_bool;
-# 371 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 371 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
              void __cdecl _invalid_parameter_noinfo(void);
          __declspec(noreturn) void __cdecl _invalid_parameter_noinfo_noreturn(void);
 
@@ -95,7 +95,7 @@ __declspec(noreturn)
                wchar_t const* _FileName,
                unsigned int _LineNo,
                uintptr_t _Reserved);
-# 604 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 604 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 typedef int errno_t;
 typedef unsigned short wint_t;
 typedef unsigned short wctype_t;
@@ -124,34 +124,34 @@ typedef struct _Mbstatet
 } _Mbstatet;
 
 typedef _Mbstatet mbstate_t;
-# 645 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 645 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
         typedef __time64_t time_t;
-# 655 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 655 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
     typedef size_t rsize_t;
-# 2072 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt.h" 3
+# 2072 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt.h" 3
 #pragma pack(pop)
 
 #pragma clang diagnostic pop
 #pragma warning(pop)
-# 13 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 2 3
-# 1 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 1 3
-# 13 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
-# 1 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 1 3
-# 12 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 13 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 2 3
+# 1 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 1 3
+# 13 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
+# 1 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 1 3
+# 12 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
 #pragma warning(push)
 #pragma warning(disable: 4324 4514 4574 4710 4793 4820 4995 4996 28719 28726 28727)
 #pragma clang diagnostic push
-# 14 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 14 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-# 14 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 14 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
 #pragma clang diagnostic ignored "-Wignored-attributes"
-# 14 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 14 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
 #pragma clang diagnostic ignored "-Wignored-pragma-optimize"
-# 14 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 14 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 
 #pragma pack(push, 8)
-# 89 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 89 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
     __declspec(noinline) __inline unsigned __int64* __cdecl __local_stdio_printf_options(void)
     {
         static unsigned __int64 _OptionsStorage;
@@ -167,22 +167,22 @@ typedef _Mbstatet mbstate_t;
         static unsigned __int64 _OptionsStorage;
         return &_OptionsStorage;
     }
-# 129 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_stdio_config.h" 3
+# 129 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_stdio_config.h" 3
 #pragma pack(pop)
 #pragma clang diagnostic pop
 #pragma warning(pop)
-# 14 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 2 3
+# 14 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 2 3
 
 #pragma warning(push)
 #pragma warning(disable: 4324 4514 4574 4710 4793 4820 4995 4996 28719 28726 28727)
 #pragma clang diagnostic push
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
 #pragma clang diagnostic ignored "-Wignored-attributes"
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
 #pragma clang diagnostic ignored "-Wignored-pragma-optimize"
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 
 #pragma pack(push, 8)
@@ -201,7 +201,7 @@ typedef _Mbstatet mbstate_t;
 
 
              FILE* __cdecl __acrt_iob_func(unsigned _Ix);
-# 51 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 51 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              wint_t __cdecl fgetwc(
                 FILE* _Stream
         );
@@ -248,7 +248,7 @@ typedef _Mbstatet mbstate_t;
                                      wchar_t* _Buffer,
                                      size_t _BufferCount
         );
-# 105 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 105 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              wint_t __cdecl putwc(
                 wchar_t _Character,
                 FILE* _Stream
@@ -355,7 +355,7 @@ typedef _Mbstatet mbstate_t;
 
 
     __declspec(deprecated("This function or variable may be unsafe. Consider using " "_wtmpnam_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) wchar_t* __cdecl _wtmpnam( wchar_t *_Buffer);
-# 224 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 224 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              wint_t __cdecl _fgetwc_nolock(
                 FILE* _Stream
         );
@@ -382,7 +382,7 @@ typedef _Mbstatet mbstate_t;
                 wint_t _Character,
                 FILE* _Stream
         );
-# 272 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 272 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              int __cdecl __stdio_common_vfwprintf(
                                                 unsigned __int64 _Options,
                                                 FILE* _Stream,
@@ -807,7 +807,7 @@ typedef _Mbstatet mbstate_t;
         __builtin_va_end(_ArgList);
         return _Result;
     }
-# 705 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 705 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              int __cdecl __stdio_common_vfwscanf(
                                                unsigned __int64 _Options,
                                                FILE* _Stream,
@@ -1087,7 +1087,7 @@ typedef _Mbstatet mbstate_t;
             __builtin_va_end(_ArgList);
             return _Result;
         }
-# 1006 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1006 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              int __cdecl __stdio_common_vswprintf(
                                                 unsigned __int64 _Options,
                                                 wchar_t* _Buffer,
@@ -1192,7 +1192,7 @@ typedef _Mbstatet mbstate_t;
 
 
     __declspec(deprecated("This function or variable may be unsafe. Consider using " "_snwprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) __inline int __cdecl _snwprintf( wchar_t *_Buffer, size_t _BufferCount, wchar_t const* _Format, ...); __declspec(deprecated("This function or variable may be unsafe. Consider using " "_vsnwprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) __inline int __cdecl _vsnwprintf( wchar_t *_Buffer, size_t _BufferCount, wchar_t const* _Format, va_list _Args);
-# 1119 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1119 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
                        __declspec(deprecated("This function or variable may be unsafe. Consider using " "_vsnwprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details."))
     __inline int __cdecl _vsnwprintf(
                                                      wchar_t* _Buffer,
@@ -1206,7 +1206,7 @@ typedef _Mbstatet mbstate_t;
     {
         return _vsnwprintf_l(_Buffer, _BufferCount, _Format, ((void *)0), _ArgList);
     }
-# 1145 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1145 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
     __inline int __cdecl _vswprintf_c_l(
                                                           wchar_t* const _Buffer,
                                                           size_t const _BufferCount,
@@ -1342,7 +1342,7 @@ typedef _Mbstatet mbstate_t;
         {
             return _vswprintf_s_l(_Buffer, _BufferCount, _Format, ((void *)0), _ArgList);
         }
-# 1294 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1294 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
     __inline int __cdecl _vswprintf_p_l(
                                                       wchar_t* const _Buffer,
                                                       size_t const _BufferCount,
@@ -1525,9 +1525,9 @@ typedef _Mbstatet mbstate_t;
 
 
     __declspec(deprecated("This function or variable may be unsafe. Consider using " "__swprintf_l_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) __inline int __cdecl __swprintf_l( wchar_t *_Buffer, wchar_t const* _Format, _locale_t _Locale, ...); __declspec(deprecated("This function or variable may be unsafe. Consider using " "_vswprintf_s_l" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) __inline int __cdecl __vswprintf_l( wchar_t *_Buffer, wchar_t const* _Format, _locale_t _Locale, va_list _Args);
-# 1484 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1484 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
     __declspec(deprecated("This function or variable may be unsafe. Consider using " "swprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) __inline int __cdecl _swprintf( wchar_t *_Buffer, wchar_t const* _Format, ...); __declspec(deprecated("This function or variable may be unsafe. Consider using " "vswprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) __inline int __cdecl _vswprintf( wchar_t *_Buffer, wchar_t const* _Format, va_list _Args);
-# 1493 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1493 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
     __inline int __cdecl _swprintf_s_l(
                                                       wchar_t* const _Buffer,
                                                       size_t const _BufferCount,
@@ -1566,7 +1566,7 @@ typedef _Mbstatet mbstate_t;
             __builtin_va_end(_ArgList);
             return _Result;
         }
-# 1544 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1544 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
     __inline int __cdecl _swprintf_p_l(
                                                       wchar_t* const _Buffer,
                                                       size_t const _BufferCount,
@@ -1733,7 +1733,7 @@ typedef _Mbstatet mbstate_t;
         __builtin_va_end(_ArgList);
         return _Result;
     }
-# 1721 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1721 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
     __inline int __cdecl _scwprintf_l(
                                                 wchar_t const* const _Format,
                                                 _locale_t const _Locale,
@@ -1812,9 +1812,9 @@ typedef _Mbstatet mbstate_t;
 
 #pragma warning(push)
 #pragma warning(disable: 4141 6054)
-# 1854 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1854 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
 #pragma warning(pop)
-# 1871 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1871 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
              int __cdecl __stdio_common_vswscanf(
                                                unsigned __int64 _Options,
                                                wchar_t const* _Buffer,
@@ -1890,7 +1890,7 @@ typedef _Mbstatet mbstate_t;
         {
             return _vswscanf_s_l(_Buffer, _Format, ((void *)0), _ArgList);
         }
-# 1959 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\corecrt_wstdio.h" 3
+# 1959 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\corecrt_wstdio.h" 3
                        __declspec(deprecated("This function or variable may be unsafe. Consider using " "_vsnwscanf_s_l" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details."))
     __inline int __cdecl _vsnwscanf_l(
                                                wchar_t const* const _Buffer,
@@ -2104,22 +2104,22 @@ typedef _Mbstatet mbstate_t;
 #pragma pack(pop)
 #pragma clang diagnostic pop
 #pragma warning(pop)
-# 14 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 2 3
+# 14 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 2 3
 
 #pragma warning(push)
 #pragma warning(disable: 4324 4514 4574 4710 4793 4820 4995 4996 28719 28726 28727)
 #pragma clang diagnostic push
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
 #pragma clang diagnostic ignored "-Wignored-attributes"
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
 #pragma clang diagnostic ignored "-Wignored-pragma-optimize"
-# 17 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 17 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 
 #pragma pack(push, 8)
-# 73 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 73 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
 typedef __int64 fpos_t;
 
 
@@ -2133,7 +2133,7 @@ typedef __int64 fpos_t;
                   char*** _Pointer,
                   int** _Count
         );
-# 96 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 96 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
                  errno_t __cdecl clearerr_s(
                     FILE* _Stream
             );
@@ -2493,7 +2493,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
                 int _Character,
                 FILE* _Stream
         );
-# 463 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 463 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
              void __cdecl _lock_file(
                 FILE* _Stream
         );
@@ -2593,9 +2593,9 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
                 int _Character,
                 FILE* _Stream
         );
-# 589 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 589 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
              int* __cdecl __p__commode(void);
-# 609 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 609 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
              int __cdecl __stdio_common_vfprintf(
                                                 unsigned __int64 _Options,
                                                 FILE* _Stream,
@@ -3025,7 +3025,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
         __builtin_va_end(_ArgList);
         return _Result;
     }
-# 1046 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1046 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
              int __cdecl __stdio_common_vfscanf(
                                                unsigned __int64 _Options,
                                                FILE* _Stream,
@@ -3307,7 +3307,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
             __builtin_va_end(_ArgList);
             return _Result;
         }
-# 1339 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1339 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
              int __cdecl __stdio_common_vsprintf(
                                                 unsigned __int64 _Options,
                                                 char* _Buffer,
@@ -3383,7 +3383,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
     {
         return _vsnprintf_l(_Buffer, _BufferCount, _Format, ((void *)0), _ArgList);
     }
-# 1429 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1429 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl vsnprintf(
                                                           char* const _Buffer,
                                                           size_t const _BufferCount,
@@ -3470,7 +3470,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
         {
             return _vsprintf_s_l(_Buffer, _BufferCount, _Format, ((void *)0), _ArgList);
         }
-# 1529 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1529 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl _vsprintf_p_l(
                                                       char* const _Buffer,
                                                       size_t const _BufferCount,
@@ -3543,7 +3543,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
     {
         return _vsnprintf_s_l(_Buffer, _BufferCount, _MaxCount, _Format, ((void *)0), _ArgList);
     }
-# 1616 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1616 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
         __inline int __cdecl vsnprintf_s(
                                                               char* const _Buffer,
                                                               size_t const _BufferCount,
@@ -3557,7 +3557,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
         {
             return _vsnprintf_s_l(_Buffer, _BufferCount, _MaxCount, _Format, ((void *)0), _ArgList);
         }
-# 1643 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1643 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl _vscprintf_l(
                                                 char const* const _Format,
                                                 _locale_t const _Locale,
@@ -3699,7 +3699,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
 
 
     __declspec(deprecated("This function or variable may be unsafe. Consider using " "sprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) int __cdecl sprintf( char *_Buffer, char const* _Format, ...); __declspec(deprecated("This function or variable may be unsafe. Consider using " "vsprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) int __cdecl vsprintf( char *_Buffer, char const* _Format, va_list _Args);
-# 1792 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1792 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl _sprintf_s_l(
                                                       char* const _Buffer,
                                                       size_t const _BufferCount,
@@ -3739,7 +3739,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
             __builtin_va_end(_ArgList);
             return _Result;
         }
-# 1844 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1844 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl _sprintf_p_l(
                                                       char* const _Buffer,
                                                       size_t const _BufferCount,
@@ -3800,7 +3800,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
         __builtin_va_end(_ArgList);
         return _Result;
     }
-# 1919 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1919 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl snprintf(
                                                           char* const _Buffer,
                                                           size_t const _BufferCount,
@@ -3840,7 +3840,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
 
 
     __declspec(deprecated("This function or variable may be unsafe. Consider using " "_snprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) int __cdecl _snprintf( char *_Buffer, size_t _BufferCount, char const* _Format, ...); __declspec(deprecated("This function or variable may be unsafe. Consider using " "_vsnprintf_s" " instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. " "See online help for details.")) int __cdecl _vsnprintf( char *_Buffer, size_t _BufferCount, char const* _Format, va_list _Args);
-# 1968 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 1968 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl _snprintf_c_l(
                                                 char* const _Buffer,
                                                 size_t const _BufferCount,
@@ -3921,7 +3921,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
         __builtin_va_end(_ArgList);
         return _Result;
     }
-# 2059 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 2059 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
     __inline int __cdecl _scprintf_l(
                                                 char const* const _Format,
                                                 _locale_t const _Locale,
@@ -4070,7 +4070,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
         {
             return _vsscanf_s_l(_Buffer, _Format, ((void *)0), _ArgList);
         }
-# 2216 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 2216 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
 #pragma warning(pop)
 
 
@@ -4254,7 +4254,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
 
 
 #pragma warning(pop)
-# 2420 "C:\\\\Program Files (x86)\\\\Windows Kits\\\\10\\\\Include\\\\10.0.22000.0\\\\ucrt\\stdio.h" 3
+# 2420 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22000.0\\ucrt\\stdio.h" 3
         __declspec(deprecated("The POSIX name for this item is deprecated. Instead, use the ISO C " "and C++ conformant name: " "_tempnam" ". See online help for details."))
                  char* __cdecl tempnam(
                        char const* _Directory,

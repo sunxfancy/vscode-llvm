@@ -9,9 +9,7 @@ export class Debug {
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
             let launchConfig = vscode.workspace.getConfiguration('launch', vscode.workspace.workspaceFolders[0].uri);
             console.log("save Config: ", launchConfig);
-            let args = pipeline.command.args.concat([
-                '-o', pipeline.command.output, 
-                '-x', pipeline.command.language, pipeline.command.input]);
+            let args = pipeline.command.getArgs();
             
             let c = {
                 "type": "lldb",

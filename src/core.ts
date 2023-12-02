@@ -15,7 +15,6 @@ export class Pass {
 
 export class Pipeline {
     public isCompare: boolean = false;
-    public cmdEnv: CommandEnv;
     public command: Command;
 
     public input: string = "";
@@ -27,19 +26,19 @@ export class Pipeline {
     public passList: Pass[] = [];
     public backendList: Pass[] = [];
     
-    constructor(cmd: string[], cmdEnv: CommandEnv) {
-        this.cmdEnv = cmdEnv;
-        this.command = new Command(cmd);
+    constructor(cmd: Command) {
+        this.command = cmd;
     }
 
     public async run() {
-        const {stdout, stderr} = await this.cmdEnv.runClang(this.command);
+        const {stdout, stderr} = await this.command.run();
         this.output = stdout;
         this.parseLLVMDump(stderr);
         
-        let index = this.command.input.lastIndexOf('.');
-        let path = this.command.input.substring(0, index);
-        
+        let input = this.command.getInputPath();
+        let index = input?.lastIndexOf('.');
+        let path = input?.substring(0, index);
+        if (!path) { return; }
         this.preprocessed = readFileSync(path + ".i").toString();
         this.llvm = readFileSync(path + ".ll").toString();
     }
@@ -89,49 +88,18 @@ export class Core {
 
     // This method is called when a command is selected from the command palette
     // It will ensure that the pipeline is running at once or already have been run
-    public async ensurePipeline(cmd: string, path: string, cenv: CommandEnv) {
-        if (this.pipelines.has(cmd + " -g -S " + path + " -o -")) {
-            this.active = this.pipelines.get(cmd + " -g -S " + path + " -o -");
+    public async ensurePipeline(cmd: string, cenv?: CommandEnv) {
+        if (this.pipelines.has(cmd)) {
+            this.active = this.pipelines.get(cmd);
             this.provider?.refresh();
             return;
         }
 
-        console.log("ensurePipeline: " + cmd + " " + path);
-        let filter = "";
-        if (this.filter !== "") {
-            filter = " -mllvm -filter-print-funcs=" + this.filter + " ";
-        }
-        let real = await cenv.getRealCommand(cmd + " -g -S -mllvm -print-before-all  -mllvm -print-after-all " + filter + path + " -o -");
-
-        let pipeline = new Pipeline(real, cenv);
-        this.pipelines.set(cmd + " -g -S " + path + " -o -", pipeline);
-        this.active = pipeline;
-        await this.runWithProgress();
-        this.provider?.refresh();
-    }
-
-    public async ensurePipelineLTO(cmd: string, cenv: CommandEnv) {
-        if (this.pipelines.has(cmd + " -S ")) {
-            this.active = this.pipelines.get(cmd + " -S ");
-            this.provider?.refresh();
-            return;
-        }
-
-        let index = cmd.indexOf(" ");
-        let args0 = cmd.substring(0, index);
-        let args = cmd.substring(index+1);
-        let filter = "";
-        if (this.filter !== "") {
-            filter = " -Wl,-mllvm -Wl,-filter-print-funcs=" + this.filter + " ";
-        }
-        cmd = args0 + " -save-temps -Wl,-mllvm -Wl,-print-before-all -Wl,-mllvm -Wl,-print-after-all" + filter + args;
-
-        console.log("ensurePipelineLTO: " + cmd); 
-        
-        let real = await cenv.getRealCommand(cmd);
-
-        let pipeline = new Pipeline(real, cenv);
-        this.pipelines.set(cmd + " -S ", pipeline);
+        let command = await Command.createfromString(cmd);
+        if (!command) { return; }
+        if (cenv) { command.env = cenv; }
+        let pipeline = new Pipeline(command);
+        this.pipelines.set(cmd, pipeline);
         this.active = pipeline;
         await this.runWithProgress();
         this.provider?.refresh();

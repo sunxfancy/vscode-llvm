@@ -191,36 +191,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	let openPipeline = vscode.commands.registerCommand('llvmPipelineView.run', async (...args) => {
 		if (core.activeCmd) {
 			core.activeCmd = core.activeCmd.trim();
-			console.log("run: " + core.activeCmd);
-			let llvm_dir = path.dirname(core.activeCmd.slice(0, core.activeCmd.indexOf(' ')-1));
-			console.log("llvm_dir: ", llvm_dir);
-			let cmdEnv = new CommandEnv(llvm_dir);
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 				process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
 			console.log("current dir:", process.cwd());
-
-			let realArgs = await cmdEnv.getRealCommand(core.activeCmd);
-			console.log(realArgs[0].substring(realArgs[0].lastIndexOf('/')+1));
-			if (realArgs[0].substring(realArgs[0].lastIndexOf('/')+1) == 'ld.lld') {
-				// call lld
-				core.ensurePipelineLTO(core.activeCmd, cmdEnv);
-				return;
-			}
-			// if ('-o' in realArgs) {
-			// 	let output = realArgs[realArgs.indexOf('-o')+1];
-			// }
-
-			if (vscode.window.activeTextEditor) {
-				let path = vscode.window.activeTextEditor.document.uri.path;
-				core.ensurePipeline(core.activeCmd, path, cmdEnv);
-			} 
+			
+			core.ensurePipeline(core.activeCmd);
 		}
 	});
 
 	
 	let debugPipeline = vscode.commands.registerCommand('llvmPipelineView.run-debug', async (...args) => {
 		if (vscode.window.activeTextEditor && core.activeCmd && core.active) {
-			let path = vscode.window.activeTextEditor.document.uri.path;
+			
 			let debugConfig = new Debug();
 			debugConfig.saveConfig(core.active);
 		}

@@ -57,7 +57,10 @@ export class PipelineNode {
 		}
 		if (core.active) {
 			if (this.label === 'input') {
-				let src = new PipelineNode(core.active.command.input, this);
+				let name = core.active.command.getInputPath();
+				if (name) {
+					let src = new PipelineNode(name, this);
+				}
 			}
 			if (this.label === 'front end') {
 				let i = new PipelineNode("after preprocessing", this);

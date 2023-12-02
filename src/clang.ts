@@ -26,14 +26,30 @@ export class Command {
         let nvccNames = RegExp("(nvcc)(\.exe)?$");
 
         if (clangNames.test(commands[0])) {
+            // if this is cc1 command, then we can directly create it
             if (commands.indexOf("-cc1") !== -1) {
                 return new CC1Command(commands);
             }
+
+            // for clang command, we need to get the real command by running with '-###'
             let clangCmd = new ClangCommand(commands);
+            let realCommands = await clangCmd.getRealCommands();
+            // real commands will be added to subCommands
+            for (let cmd of realCommands) {
+                let args = parseShellArg(cmd);
+                if (args) {
+                    let subCommand = await Command.create(args);
+                    if (subCommand) {
+                        clangCmd.subCommands.push(subCommand);
+                    }
+                }
+            }
             return clangCmd;
         } else if (lldNames.test(commands[0])) {
+            // TODO: parse lld command
             return new LLDCommand(commands);
         } else if (nvccNames.test(commands[0])) {
+            // TODO: similar to clang, we need to get the real commands
             return new NVCCCommand(commands);
         } else {
             return new Command(commands);
@@ -47,7 +63,7 @@ export class Command {
         return Command.create(commands);
     }
 
-    public async run(addition: string[] | null | undefined): Promise<{ code: number | null, stdout: string, stderr: string }> {
+    public async run(addition?: string[]): Promise<{ code: number | null, stdout: string, stderr: string }> {
         let env = this.env;
         if (env === undefined) {
             env = CommandEnv.getDefault();
@@ -58,7 +74,8 @@ export class Command {
         }
         return env.run(this.exe, args);
     }
-
+    public getInputPath(): string | undefined { return undefined; }
+    public getOutputPath(): string | undefined { return undefined; }
 
     public isExeAbsolute(): boolean {
         return path.isAbsolute(this.exe);
@@ -110,6 +127,14 @@ class CC1Command extends Command {
         return this.args.concat();
     }
 
+    public getInputPath() {
+        return this.input;
+    }
+
+    public getOutputPath() {
+        return this.output;
+    }
+
     public toString() {
         return super.toString() +
             (this.output ? '"-o" "' + this.output + '"' : "") +
@@ -122,7 +147,6 @@ class ClangCommand extends Command {
     public input: string[];
     public output?: string;
     public subCommands: Command[] = [];
-    public linkCommand?: Command;
 
     constructor(commands: string[]) {
         // get output file
@@ -141,8 +165,8 @@ class ClangCommand extends Command {
         commands = commands.filter((value) => { return value !== ""; });
 
         // get mode configuaration
-        let modeRe = RegExp("-fsyntax-only|-S|-c|-E");
-        let mode = commands.find((value) => { return value.match(modeRe); });        
+        let modeRe = RegExp("-S|-c|-E");
+        let mode = commands.find((value) => { return value.match(modeRe); });
 
         super(commands);
         this.output = output;
@@ -152,43 +176,88 @@ class ClangCommand extends Command {
     }
 
     public async getRealCommands() {
-
         const { stdout, stderr } = await this.run(["-###"]);
         console.log("stderr of get real command: ", stdout, stderr);
 
-        function findCommand(cmd: string): string[] {
-            let lines = cmd.split(/\r?\n/);
-            let realCommand = lines[4].trim();
-            let k = 5;
-            while (!realCommand.startsWith("\"") && k < lines.length) {
-                realCommand = lines[k++].trim();
-            }
-            console.log("realCommand: " + realCommand);
-            realCommand = realCommand.substring(1, realCommand.length - 1);
-            return realCommand.split("\" \"");
-        }
-
+        let cmd: string;
         if (stderr !== "") {
-            return findCommand(stderr);
+            cmd = stderr;
         } else if (stdout !== "") {
-            return findCommand(stdout);
+            cmd = stdout;
         } else {
             return [];
         }
+
+        let lines = cmd.split(/\r?\n/);
+        let k = 4;
+        while (!lines[k].trim().startsWith("\"") && k < lines.length) {
+            k++;
+        }
+        return lines.slice(k);
     }
 
     public getArgs(): string[] {
-        return [];
+        let args = this.args;
+
+        if (this.mode) {
+            if (this.mode != "-S") {
+                args[args.indexOf(this.mode)] = '-S';
+            }
+        } else {
+            args = args.concat(["-S"]);
+        }
+
+        if (this.bDebug) {
+            args = args.concat(["-g"]);
+        }
+
+        if (this.bSaveTemps) {
+            args = args.concat(["-save-temps"]);
+        }
+
+        if (this.sFilter) {
+            args = args.concat(["-mllvm", "-filter-print-funcs=", this.sFilter]);
+        }
+
+        if (this.bPrintBefore) {
+            args = args.concat(["-mllvm", "-print-before-all"]);
+        }
+
+        if (this.bPrintAfter) {
+            args = args.concat(["-mllvm", "-print-after-all"]);
+        }
+
+        if (this.bOutputToStdout || this.output === undefined)
+            args = args.concat(["-o", "-"]);
+        else
+            args = args.concat(["-o", this.output]);
+
+        if (this.bInputFromStdin == false && this.input.length > 0) {
+            args = args.concat(this.input);
+        }
+
+        return args;
     }
 
-    bOutputToStdout = false;
-    bDebug = false;
-    bFilter?:string; 
-    bPrintBefore = false;
-    bPrintAfter = false;
-    mode?: string;
+    public isInputFromStdin(): boolean {
+        return this.bInputFromStdin || this.input.length === 0;
+    }
+
+    public isOutputToStdout(): boolean {
+        return this.bOutputToStdout || this.output === undefined;
+    }
+
+    public bInputFromStdin = false;
+    public bSaveTemps = true;
+    public bOutputToStdout = true;
+    public bDebug = false;
+    public sFilter?: string;
+    public bPrintBefore = true;
+    public bPrintAfter = true;
+    public mode?: string;
 }
 
+// TODO: LLDCommand and NVCCCommand
 class LLDCommand extends Command {
 }
 
@@ -211,8 +280,8 @@ export class CommandEnv {
         // if not specified, use the current process env
         if (env) {
             this.env = env;
-        } else { 
-            this.env = process.env; 
+        } else {
+            this.env = process.env;
         }
     }
 
