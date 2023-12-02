@@ -1,3 +1,27 @@
+// --------------------------------------------------------------
+// This file contains a list of utility functions
+// --------------------------------------------------------------
+
+
+export function parseShellArg(str: string): string[] | undefined {
+    return str.match(/"([^"]+)"|'([^']+)'|\S+/g)?.map(
+        x => (x[0] === '\"' || x[0] === '\'') ? x.substring(1, x.length - 1) : x);
+}
+
+export function getNonce() {
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+}
+
+
+// --------------------------------------------------------------
+// The following code is for asm.ts
+// --------------------------------------------------------------
+
 // Copyright (c) 2016, Matt Godbolt
 // All rights reserved.
 //
@@ -57,20 +81,4 @@ export function squashHorizontalWhitespace(line: string, atStart: boolean): stri
     } else {
         return splat.join(" ");
     }
-}
-
-export function getNonce() {
-	let text = '';
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	for (let i = 0; i < 32; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
-	}
-	return text;
-}
-
-// --------------------------------------------------------------
-
-export function parseShellArg(str: string): string[] | undefined {
-    return str.match(/"([^"]+)"|'([^']+)'|\S+/g)?.map(
-        x => (x[0] == '\"' ||  x[0] == '\'') ? x.substring(1, x.length - 1) : x);
 }

@@ -4,69 +4,223 @@ import { parseShellArg } from './utils';
 import * as vscode from 'vscode';
 import { exec, spawn } from 'child_process';
 
-
+// This class is an abstraction of clang/lld/llvm commands
+// Or, may use to store other commands
 export class Command {
     public exe: string;
     public args: string[];
-    public input: string; 
-    public output: string; 
-    public language: string;
+    public env?: CommandEnv;
 
-    // this must be a real command
-    constructor(commands: string[]) {
+    // This should not be directly used
+    protected constructor(commands: string[]) {
         this.exe = commands[0];
-        this.language = commands[commands.indexOf("-x") + 1];
-        this.input = commands[commands.indexOf("-x") + 2];
-        this.output = commands[commands.indexOf("-o") + 1];
-        commands.splice(commands.indexOf("-x"), 3);
-        commands.splice(commands.indexOf("-o"), 2);
         commands.splice(0, 1);
         this.args = commands;
     }
 
-    public redirectOutputToStdout() {
-        this.output = '-';
+    // This function create a command and automatically detect the type
+    public static async create(commands: string[]): Promise<Command | undefined> {
+        if (commands.length === 0) { return undefined; }
+        let clangNames = RegExp("(clang|clang\\+\\+|clang-cl|clang-cpp)(-[0-9]+(\\.[0-9]+)?)?(\.exe)?$");
+        let lldNames = RegExp("(ld.lld|ld64.lld|lld|lld-link)(\.exe)?$");
+        let nvccNames = RegExp("(nvcc)(\.exe)?$");
+
+        if (clangNames.test(commands[0])) {
+            if (commands.indexOf("-cc1") !== -1) {
+                return new CC1Command(commands);
+            }
+            let clangCmd = new ClangCommand(commands);
+            return clangCmd;
+        } else if (lldNames.test(commands[0])) {
+            return new LLDCommand(commands);
+        } else if (nvccNames.test(commands[0])) {
+            return new NVCCCommand(commands);
+        } else {
+            return new Command(commands);
+        }
+    }
+
+    // This function will correctly parse the command string
+    public static async createfromString(cmd: string): Promise<Command | undefined> {
+        let commands = parseShellArg(cmd);
+        if (!commands) { return undefined; }
+        return Command.create(commands);
+    }
+
+    public async run(addition: string[] | null | undefined): Promise<{ code: number | null, stdout: string, stderr: string }> {
+        let env = this.env;
+        if (env === undefined) {
+            env = CommandEnv.getDefault();
+        }
+        let args = this.getArgs();
+        if (addition) {
+            args = args.concat(addition);
+        }
+        return env.run(this.exe, args);
+    }
+
+
+    public isExeAbsolute(): boolean {
+        return path.isAbsolute(this.exe);
+    }
+
+    public isExeRelative(): boolean {
+        return !this.isExeAbsolute();
+    }
+
+    public isExeOnlyName(): boolean {
+        return this.exe.indexOf("/") === -1;
+    }
+
+    public isExeInPath(): boolean {
+        return which.sync(this.exe, { nothrow: true }) !== null;
+    }
+
+    public getArgs(): string[] {
+        return this.args;
     }
 
     public toString() {
-        return "\"" + this.exe + "\" \"" + this.args.join("\" \"") + "\" \"-o\" \"" + this.output 
-                + "\" \"-x\" \"" + this.language + "\" \"" + this.input + "\""; 
+        return '"' + this.exe + '" "' + this.args.join('" "') + '"';
     }
 }
 
-export class CommandEnv {
-    constructor(llvmPath?: string, workDir?: string, env?: Map<string, string>) {
-        if (llvmPath) { 
-            this.llvmPath = llvmPath; 
-        } else { 
-            this.llvmPath = path.dirname(which.sync('clang')); 
+class CC1Command extends Command {
+    public input?: string;
+    public output?: string;
+    public language?: string;
+
+    constructor(commands: string[]) {
+        let language = commands[commands.indexOf("-x") + 1];
+        let input = commands[commands.indexOf("-x") + 2];
+        let output = commands[commands.indexOf("-o") + 1];
+        commands.splice(commands.indexOf("-x"), 3);
+        commands.splice(commands.indexOf("-o"), 2);
+        super(commands);
+        this.input = input;
+        this.output = output;
+        this.language = language;
+    }
+
+    public getArgs(): string[] {
+        let args = [];
+        if (this.output) { args.push("-o", this.output); }
+        if (this.language) { args.push("-x", this.language); }
+        if (this.input) { args.push(this.input); }
+        return this.args.concat();
+    }
+
+    public toString() {
+        return super.toString() +
+            (this.output ? '"-o" "' + this.output + '"' : "") +
+            (this.language ? '"-x" "' + this.language + '"' : "") +
+            (this.input ? '"' + this.input + '"' : "");
+    }
+}
+
+class ClangCommand extends Command {
+    public input: string[];
+    public output?: string;
+    public subCommands: Command[] = [];
+    public linkCommand?: Command;
+
+    constructor(commands: string[]) {
+        // get output file
+        let output = commands[commands.indexOf("-o") + 1];
+        commands.splice(commands.indexOf("-o"), 2);
+
+        // get input files
+        let input: string[] = [];
+        let cppName = RegExp("\.(C|c|cpp|cxx|cc|c\\+\\+)$");
+        for (let i = 0; i < commands.length; i++) {
+            if (cppName.test(commands[i])) {
+                input.push(commands[i]);
+                commands[i] = "";
+            }
         }
-        if (workDir) { 
-            this.workdir = workDir; 
+        commands = commands.filter((value) => { return value !== ""; });
+
+        // get mode configuaration
+        let modeRe = RegExp("-fsyntax-only|-S|-c|-E");
+        let mode = commands.find((value) => { return value.match(modeRe); });        
+
+        super(commands);
+        this.output = output;
+        this.input = input;
+
+        if (mode) { this.mode = mode; }
+    }
+
+    public async getRealCommands() {
+
+        const { stdout, stderr } = await this.run(["-###"]);
+        console.log("stderr of get real command: ", stdout, stderr);
+
+        function findCommand(cmd: string): string[] {
+            let lines = cmd.split(/\r?\n/);
+            let realCommand = lines[4].trim();
+            let k = 5;
+            while (!realCommand.startsWith("\"") && k < lines.length) {
+                realCommand = lines[k++].trim();
+            }
+            console.log("realCommand: " + realCommand);
+            realCommand = realCommand.substring(1, realCommand.length - 1);
+            return realCommand.split("\" \"");
+        }
+
+        if (stderr !== "") {
+            return findCommand(stderr);
+        } else if (stdout !== "") {
+            return findCommand(stdout);
+        } else {
+            return [];
+        }
+    }
+
+    public getArgs(): string[] {
+        return [];
+    }
+
+    bOutputToStdout = false;
+    bDebug = false;
+    bFilter?:string; 
+    bPrintBefore = false;
+    bPrintAfter = false;
+    mode?: string;
+}
+
+class LLDCommand extends Command {
+}
+
+class NVCCCommand extends Command {
+}
+
+
+export class CommandEnv {
+    constructor(workDir?: string, env?: NodeJS.ProcessEnv) {
+        // if not specified, use the first workspace folder
+        // if not open any workspace folder, use the current working directory of process
+        if (workDir) {
+            this.workdir = workDir;
         } else if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
             this.workdir = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        } else {
+            this.workdir = process.cwd();
         }
-        if (env) { this.env = env; }
+
+        // if not specified, use the current process env
+        if (env) {
+            this.env = env;
+        } else { 
+            this.env = process.env; 
+        }
     }
 
-
-    public async runClang(cmd: Command, env?: Map<string, string>) {
-        return this.runClangRaw(cmd.toString(), env);
-    }
-
-    public async runClangRaw(cmd: string, env?: Map<string, string>): Promise<{stdout: string, stderr: string}> {
-        console.log(cmd);
-        let raw_args = parseShellArg(cmd);
-        if (raw_args == null) {
-            return {stdout: "", stderr: ""};
-        }
-        let args: string[] = raw_args;
-        let exe = args[0];
-        args.shift();
+    public async run(exe: string, args: string[]): Promise<{ code: number | null, stdout: string, stderr: string }> {
         return new Promise((resolve, reject) => {
             let stderr: string[] = [];
             let stdout: string[] = [];
-            const run = spawn(exe, args);
+            const run = spawn(exe, args, { cwd: this.workdir, env: this.env });
             run.stderr.on('data', (data) => {
                 stderr.push(data);
             });
@@ -74,7 +228,7 @@ export class CommandEnv {
                 stdout.push(data);
             });
             run.on('close', (code) => {
-                resolve({stdout: stdout.join(""), stderr: stderr.join("")});
+                resolve({ code: code, stdout: stdout.join(""), stderr: stderr.join("") });
             });
             run.on('error', (err) => {
                 reject(err);
@@ -82,49 +236,14 @@ export class CommandEnv {
         });
     }
 
-    public async runOPT(args: string[], output?: string, env?: Map<string, string>): Promise<any|undefined>  {
-        
-    }
-
-    public async runLLC(args: string[], output?: string, env?: Map<string, string>): Promise<any|undefined> {
-        
-    }
-
-
-    getLLVMOpt(): string[] {
-        return ['-mllvm', '-print-after-all'];
-    }
-
-    public setDebug() {
-        return ['-g', '-S'];
-    }    
-
-    private findCommand(cmd: string): string[] {
-        let lines = cmd.split(/\r?\n/);
-        let realCommand = lines[4].trim();
-        let k = 5;
-        while (!realCommand.startsWith("\"") && k < lines.length) {
-            realCommand = lines[k++].trim();
+    static defaultEnv?: CommandEnv;
+    static getDefault(): CommandEnv {
+        if (!CommandEnv.defaultEnv) {
+            CommandEnv.defaultEnv = new CommandEnv();
         }
-        console.log("realCommand: " + realCommand);
-        realCommand = realCommand.substring(1, realCommand.length - 1);
-        return realCommand.split("\" \"");
+        return CommandEnv.defaultEnv;
     }
 
-    public async getRealCommand(args: string, env?: Map<string, string>): Promise<string[]> {
-        console.log("runClangRaw: " + args + " -###");
-        const {stdout, stderr} = await this.runClangRaw(args + " -###", env);
-        console.log("stderr of get real command: ", stdout, stderr);
-        if (stderr !== "") {
-            return this.findCommand(stderr);
-        } else if (stdout !== "") {
-            return this.findCommand(stdout);
-        } else {
-            return [];
-        }
-    }
-
-    private llvmPath: string;
     private workdir?: string;
-    private env?: Map<string, string>;
+    private env?: NodeJS.ProcessEnv;
 }
