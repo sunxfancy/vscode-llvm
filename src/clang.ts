@@ -76,6 +76,7 @@ export class Command {
     }
     public getInputPath(): string | undefined { return undefined; }
     public getOutputPath(): string | undefined { return undefined; }
+    public setFilter(filter: string) { }
 
     public isExeAbsolute(): boolean {
         return path.isAbsolute(this.exe);
@@ -100,12 +101,17 @@ export class Command {
     public toString() {
         return '"' + this.exe + '" "' + this.args.join('" "') + '"';
     }
+
+    public getType(): string {
+        return "Command";
+    }
 }
 
-class CC1Command extends Command {
+export class CC1Command extends Command {
     public input?: string;
     public output?: string;
     public language?: string;
+    public mode?: string;
 
     constructor(commands: string[]) {
         let language = commands[commands.indexOf("-x") + 1];
@@ -117,6 +123,9 @@ class CC1Command extends Command {
         this.input = input;
         this.output = output;
         this.language = language;
+
+        let modeRe = RegExp("-E|-S|-emit-llvm|-emit-llvm-bc");
+        this.mode = commands.find((value) => { return value.match(modeRe); });
     }
 
     public getArgs(): string[] {
@@ -141,21 +150,29 @@ class CC1Command extends Command {
             (this.language ? '"-x" "' + this.language + '"' : "") +
             (this.input ? '"' + this.input + '"' : "");
     }
+
+    public getType(): string {
+        return "CC1Command";
+    }
 }
 
-class ClangCommand extends Command {
+export class ClangCommand extends Command {
     public input: string[];
     public output?: string;
     public subCommands: Command[] = [];
 
     constructor(commands: string[]) {
         // get output file
-        let output = commands[commands.indexOf("-o") + 1];
-        commands.splice(commands.indexOf("-o"), 2);
+        let outputIdx = commands.indexOf("-o");
+        let output = undefined;
+        if (outputIdx !== -1) {
+            output = commands[outputIdx + 1];
+            commands.splice(outputIdx, 2);
+        }
 
         // get input files
         let input: string[] = [];
-        let cppName = RegExp("\.(C|c|cpp|cxx|cc|c\\+\\+)$");
+        let cppName = RegExp("\\.(C|c|cpp|cxx|cc|c\\+\\+)$");
         for (let i = 0; i < commands.length; i++) {
             if (cppName.test(commands[i])) {
                 input.push(commands[i]);
@@ -190,7 +207,7 @@ class ClangCommand extends Command {
 
         let lines = cmd.split(/\r?\n/);
         let k = 4;
-        while (!lines[k].trim().startsWith("\"") && k < lines.length) {
+        while (k < lines.length && !lines[k] && !lines[k].trim().startsWith("\"")) {
             k++;
         }
         return lines.slice(k);
@@ -199,11 +216,7 @@ class ClangCommand extends Command {
     public getArgs(): string[] {
         let args = this.args;
 
-        if (this.mode) {
-            if (this.mode != "-S") {
-                args[args.indexOf(this.mode)] = '-S';
-            }
-        } else {
+        if (args.indexOf("-S") === -1) {
             args = args.concat(["-S"]);
         }
 
@@ -216,7 +229,7 @@ class ClangCommand extends Command {
         }
 
         if (this.sFilter) {
-            args = args.concat(["-mllvm", "-filter-print-funcs=", this.sFilter]);
+            args = args.concat(["-mllvm", "-filter-print-funcs=" + this.sFilter]);
         }
 
         if (this.bPrintBefore) {
@@ -239,12 +252,27 @@ class ClangCommand extends Command {
         return args;
     }
 
+    public getInputPath(): string | undefined {
+        if (this.input.length > 0) {
+            return this.input[0];
+        }
+    }
+    public getOutputPath(): string | undefined {
+        return this.output;
+    }
+
     public isInputFromStdin(): boolean {
         return this.bInputFromStdin || this.input.length === 0;
     }
 
     public isOutputToStdout(): boolean {
         return this.bOutputToStdout || this.output === undefined;
+    }
+
+    public setFilter(filter: string) { this.sFilter = filter; }
+
+    public getType(): string {
+        return "ClangCommand";
     }
 
     public bInputFromStdin = false;
@@ -258,10 +286,16 @@ class ClangCommand extends Command {
 }
 
 // TODO: LLDCommand and NVCCCommand
-class LLDCommand extends Command {
+export class LLDCommand extends Command {
+    public getType(): string {
+        return "LLDCommand";
+    }
 }
 
-class NVCCCommand extends Command {
+export class NVCCCommand extends Command {
+    public getType(): string {
+        return "NVCCCommand";
+    }
 }
 
 

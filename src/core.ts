@@ -1,14 +1,17 @@
-import { readFile, readFileSync } from 'fs';
-import {Command, CommandEnv} from './clang';
-import {LLVMPipelineTreeDataProvider} from './pipeline-panel';
+import { readFileSync } from 'fs';
+import { CC1Command, ClangCommand, Command, CommandEnv } from './clang';
+import { LLVMPipelineTreeDataProvider } from './pipeline-panel';
 import * as vscode from 'vscode';
 export class Pass {
+    public same: boolean;
+
     constructor(
-        public name: string, 
-        public before_ir: string, 
-        public after_ir: string, 
+        public name: string,
+        public before_ir: string,
+        public after_ir: string,
         public index: number,
         public backend: boolean) {
+        this.same = before_ir == after_ir;
     }
 }
 
@@ -25,16 +28,35 @@ export class Pipeline {
 
     public passList: Pass[] = [];
     public backendList: Pass[] = [];
-    
+
     constructor(cmd: Command) {
         this.command = cmd;
     }
 
     public async run() {
-        const {stdout, stderr} = await this.command.run();
+        const { stdout, stderr } = await this.command.run();
         this.output = stdout;
         this.parseLLVMDump(stderr);
-        
+
+        if (this.command instanceof ClangCommand) {
+            let c = this.command as ClangCommand;
+            c.subCommands.forEach(async (cmd) => {
+                if (cmd instanceof CC1Command) {
+                    let output = cmd.getOutputPath();
+                    if (cmd.mode == "-E" && output) {
+                        this.preprocessed = readFileSync(output).toString();
+                    }
+                    if (cmd.mode == "-emit-llvm-bc" && output) {
+                        let convertCmd = await Command.createfromString('clang -S -emit-llvm "' + output + '" -o -');
+                        if (convertCmd) {
+                            const { stdout, stderr } = await convertCmd.run();
+                            this.llvm = stdout;
+                        }
+                    }
+                }
+            });
+        }
+
         let input = this.command.getInputPath();
         let index = input?.lastIndexOf('.');
         let path = input?.substring(0, index);
@@ -46,7 +68,7 @@ export class Pipeline {
     public parseLLVMDump(data: string) {
         const re = /^(# )?\*\*\* (.+) \*\*\*\:?$/m;
         let pass = data.split(re);
-    
+
         for (let i = 1; i < pass.length; i += 6) {
             let sharp = pass[i];
             let name = pass[i + 1];
@@ -54,11 +76,11 @@ export class Pipeline {
             let sharp2 = pass[i + 3];
             let name2 = pass[i + 4];
             let ir2 = pass[i + 5];
-    
+
             if (name.substring(15) !== name2.substring(14)) {
                 console.log("name mismatch: " + name + " " + name2);
             }
-    
+
             if (sharp === undefined) {
                 if (sharp2 !== undefined) {
                     console.log("sharp mismatch: " + sharp + " " + sharp2);
@@ -72,7 +94,7 @@ export class Pipeline {
             }
         }
     }
-    
+
 }
 
 export class Core {
@@ -86,6 +108,18 @@ export class Core {
         this.provider = provider;
     }
 
+    public async runPipeline(cmd: string, cenv?: CommandEnv) {
+        let command = await Command.createfromString(cmd);
+        if (!command) { return; }
+        if (cenv) { command.env = cenv; }
+        if (this.filter != "") { command.setFilter(this.filter); }
+        let pipeline = new Pipeline(command);
+        this.pipelines.set(cmd, pipeline);
+        this.active = pipeline;
+        await this.runWithProgress();
+        this.provider?.refresh();
+    }
+
     // This method is called when a command is selected from the command palette
     // It will ensure that the pipeline is running at once or already have been run
     public async ensurePipeline(cmd: string, cenv?: CommandEnv) {
@@ -94,25 +128,17 @@ export class Core {
             this.provider?.refresh();
             return;
         }
-
-        let command = await Command.createfromString(cmd);
-        if (!command) { return; }
-        if (cenv) { command.env = cenv; }
-        let pipeline = new Pipeline(command);
-        this.pipelines.set(cmd, pipeline);
-        this.active = pipeline;
-        await this.runWithProgress();
-        this.provider?.refresh();
+        await this.runPipeline(cmd, cenv);
     }
 
     public async runWithProgress() {
         let pipeline = this.active;
         return vscode.window.withProgress({
             location: vscode.ProgressLocation.Window,
-            cancellable: false,
+            cancellable: true,
             title: 'Run Clang Command'
         }, async (progress) => {
-            progress.report({  increment: 0 });
+            progress.report({ increment: 0 });
             if (pipeline) await pipeline.run();
             progress.report({ increment: 100 });
         });
@@ -138,9 +164,10 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
     }
 
     public static readonly scheme = 'vscode-llvm';
-    
+
     provideTextDocumentContent(uri: vscode.Uri) {
         console.log("provideTextDocumentContent", uri);
+
         if (uri.path === '/output') {
             return this.core.active?.output;
         } else if (uri.path === '/ast') {

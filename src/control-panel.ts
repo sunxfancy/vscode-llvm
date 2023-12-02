@@ -30,7 +30,7 @@ export class ConfigViewProvider implements vscode.WebviewViewProvider {
 			switch (data.type) {
 				case 'select': {
 					this.core.activeCmd = data.value;
-					vscode.commands.executeCommand('llvmPipelineView.run');
+					vscode.commands.executeCommand('llvmPipelineView.ensure');
 					break;
 				}
 				case 'compare': {

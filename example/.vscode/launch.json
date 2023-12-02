@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "(lldb) Launch clang",
+            "program": "clang",
+            "args": [
+                "-O3",
+                "-S",
+                "-save-temps",
+                "-mllvm",
+                "-print-before-all",
+                "-mllvm",
+                "-print-after-all",
+                "-o",
+                "-",
+                "main.c"
+            ],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
