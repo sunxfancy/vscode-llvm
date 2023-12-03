@@ -2,7 +2,7 @@
   "name": "vscode-llvm",
   "displayName": "VSCode LLVM Compiler Explorer",
   "description": "A tool for LLVM pass developer",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/sunxfancy/vscode-llvm.git"
