@@ -90,12 +90,11 @@ export class AsmDecorator {
         let document = this.provider.provideAsmDocument(uri);
         if (document === undefined) return;
         this.document = document;
-        
+
         this.loadMappings();
 
-        // const dimUnused = workspace.getConfiguration('', this.srcEditor.document.uri)
-        //     .get('disasexpl.dimUnusedSourceLines', true);
-        const dimUnused = true;
+        const dimUnused = workspace.getConfiguration('vscode-llvm')
+            .get('dimUnusedSourceLines', true);
 
         if (dimUnused) {
             this.dimUnusedSourceLines();

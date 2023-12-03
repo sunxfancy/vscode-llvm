@@ -138,8 +138,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		let editor = vscode.window.activeTextEditor;
 		if (!editor) return;
 
-		// TODO: make opt-15 configurable
-		let cmd = await Command.createfromString('opt-15 -S ' + pass + ' -o -');
+		const optPath = vscode.workspace.getConfiguration('vscode-llvm')
+            .get('optPath', 'opt');
+
+		let cmd = await Command.createfromString(optPath + ' -S ' + pass + ' -o -');
 		if (cmd == undefined) return;
 		const { stdout, stderr } = await cmd.run(undefined, editor?.document.getText());
 		if (stdout && stdout.length > 0) {
@@ -184,7 +186,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			preserveFocus: true,
 		};
 
-		let asmEditor = await vscode.window.showTextDocument(asmUri, options);
+		let asmDoc = await vscode.workspace.openTextDocument(asmUri);
+		let asmEditor = await vscode.window.showTextDocument(asmDoc, options);
+		vscode.languages.setTextDocumentLanguage(asmDoc, 'vscode-llvm.disassembly');
 		const decorator = new AsmDecorator(srcEditor, asmEditor, contentProvider);
 		setTimeout(() => decorator.updateSelection(srcEditor), 500);
 	});

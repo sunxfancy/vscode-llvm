@@ -220,15 +220,15 @@ export class ClangCommand extends Command {
             args = args.concat(["-S"]);
         }
 
-        if (this.bDebug) {
+        if (this.bDebug && args.indexOf('-g') === -1) {
             args = args.concat(["-g"]);
         }
 
-        if (this.bDisableOptnone) {
+        if (this.bDisableOptnone && args.indexOf('-disable-O0-optnone') === -1) {
             args = args.concat(["-Xclang", "-disable-O0-optnone"]);
         }
 
-        if (this.bSaveTemps) {
+        if (this.bSaveTemps && args.indexOf('-save-temps') === -1) {
             args = args.concat(["-save-temps"]);
         }
 
@@ -236,15 +236,15 @@ export class ClangCommand extends Command {
             args = args.concat(["-mllvm", "-filter-print-funcs=" + this.sFilter]);
         }
 
-        if (this.bPrintModuleScope) {
+        if (this.bPrintModuleScope && args.indexOf('-print-module-scope') === -1) {
             args = args.concat(["-mllvm", "-print-module-scope"]);
         }
 
-        if (this.bPrintBefore) {
+        if (this.bPrintBefore && args.indexOf('-print-before-all') === -1) {
             args = args.concat(["-mllvm", "-print-before-all"]);
         }
 
-        if (this.bPrintAfter) {
+        if (this.bPrintAfter && args.indexOf('-print-after-all') === -1) {
             args = args.concat(["-mllvm", "-print-after-all"]);
         }
 
@@ -289,7 +289,7 @@ export class ClangCommand extends Command {
     public bSaveTemps = true;
     public bOutputToStdout = true;
     public bDisableOptnone = true;
-    public bDebug = false;
+    public bDebug = true;
     public sFilter?: string;
     public bPrintModuleScope = true;
     public bPrintBefore = true;

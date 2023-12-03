@@ -21,3 +21,17 @@ This is a tool for compiler developers of LLVM. This vscode extension can suppor
 4. Now, you can explore the IRs after each pass
 
 ![](./doc/pass-view.png)
+
+
+## Compare Mode
+
+To debug a pass, you may want to compare a clang command with and without the pass. Or you want to debug a different version of clang with the stable version. This extension can help you to compare the difference between two IRs after each pass.
+
+![](./doc/compare.png)
+
+## Source2Asm Mapping View
+
+Inspired by Compiler Explorer, this extension can highlight the mapping between source code and the assembly code.
+
+![](./doc/highlight.png)
+

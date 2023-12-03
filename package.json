@@ -2,7 +2,7 @@
   "name": "vscode-llvm",
   "displayName": "VSCode LLVM Compiler Explorer",
   "description": "A tool for LLVM pass developer",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/sunxfancy/vscode-llvm.git"
@@ -21,6 +21,21 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "languages": [
+			{
+				"id": "vscode-llvm.disassembly",
+				"aliases": [
+					"Disassembly"
+				]
+			}
+		],
+		"grammars": [
+			{
+				"language": "vscode-llvm.disassembly",
+				"scopeName": "source.disassembly",
+				"path": "./resources/disassembly.json"
+			}
+		],
     "commands": [
       {
         "command": "llvmPipelineView.settings",
@@ -94,7 +109,25 @@
           "group": "navigation"
         }
       ]
-    }
+    },
+    "configuration": [
+      {
+        "title": "LLVM Compiler Explorer",
+        "properties": {
+          "vscode-llvm.optPath": {
+            "type": "string",
+            "default": "opt",
+            "description": "Path of 'opt' binary"
+          },
+          "vscode-llvm.dimUnusedSourceLines": {
+            "type": "boolean",
+            "default": true,
+            "description": "Dim the lines that was thrown away by compiler",
+            "scope": "resource"
+          }
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
