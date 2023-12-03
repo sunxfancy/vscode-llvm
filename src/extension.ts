@@ -57,8 +57,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommand('llvmPipelineView.open', async (...args) => {
 		console.log(args);
 		let pass = args[0] as Pass;
-		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/before${pass.backend ? "-b" : ""}/${pass.index}`));
-		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/after${pass.backend ? "-b" : ""}/${pass.index}`));
+		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/before${pass.backend ? "-b" : ""}/${pass.index}`));
+		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
 		vscode.languages.setTextDocumentLanguage(doc, 'llvm');
 		vscode.languages.setTextDocumentLanguage(doc2, 'llvm');
 		console.log("openPipelineView vscode.diff");
@@ -95,18 +95,21 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	function registerCommandForUri(cmd: string, uri: string) {
+	function registerCommandForUri(cmd: string, component: string) {
 		let command = vscode.commands.registerCommand(cmd, async () => {
-			let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(uri));
+			let raw = core.active?.raw_command;
+			if (!raw) return;
+			let uri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/${component}`);
+			let doc = await vscode.workspace.openTextDocument(uri);
 			vscode.window.showTextDocument(doc, { preserveFocus: true, preview: true });
 		});
 		context.subscriptions.push(command);
 	}
 
-	registerCommandForUri('llvmPipelineView.openOutput', `vscode-llvm:/output`);
-	registerCommandForUri('llvmPipelineView.openAST', `vscode-llvm:/ast`);
-	registerCommandForUri('llvmPipelineView.openPreprocessed', `vscode-llvm:/preprocessed`);
-	registerCommandForUri('llvmPipelineView.openLLVM', `vscode-llvm:/llvm`);
+	registerCommandForUri('llvmPipelineView.openOutput', "output");
+	registerCommandForUri('llvmPipelineView.openAST', "ast");
+	registerCommandForUri('llvmPipelineView.openPreprocessed', "preprocessed");
+	registerCommandForUri('llvmPipelineView.openLLVM', "llvm");
 }
 
 // this method is called when your extension is deactivated

@@ -2,6 +2,13 @@
 // This file contains a list of utility functions
 // --------------------------------------------------------------
 
+import * as vscode from 'vscode';
+
+export function splitURI(uri: vscode.Uri): { pipeline: string, catergory: string, index: number } {
+    let path = uri.path.split('/').map(decodeURIComponent);
+    if (path.length <= 2) return { pipeline: path[1], catergory: path[2], index: -1 };
+    return { pipeline: path[1], catergory: path[2], index: Number(path[3]) };
+}
 
 export function parseShellArg(str: string): string[] | undefined {
     return str.match(/"[^"]+"|'[^']+'|\S+/g)?.map(

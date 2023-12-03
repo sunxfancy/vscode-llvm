@@ -1,11 +1,14 @@
 import { readFileSync } from 'fs';
 import { CC1Command, ClangCommand, Command, CommandEnv } from './clang';
 import { LLVMPipelineTreeDataProvider } from './pipeline-panel';
+import { splitURI } from './utils';
 import * as vscode from 'vscode';
+
 export class Pass {
     public same: boolean;
 
     constructor(
+        public parent: Pipeline,
         public name: string,
         public before_ir: string,
         public after_ir: string,
@@ -18,6 +21,7 @@ export class Pass {
 
 export class Pipeline {
     public isCompare: boolean = false;
+    public raw_command: string = "";
     public command: Command;
 
     public input: string = "";
@@ -29,7 +33,8 @@ export class Pipeline {
     public passList: Pass[] = [];
     public backendList: Pass[] = [];
 
-    constructor(cmd: Command) {
+    constructor(raw: string, cmd: Command) {
+        this.raw_command = raw;
         this.command = cmd;
     }
 
@@ -47,7 +52,8 @@ export class Pipeline {
                         this.preprocessed = readFileSync(output).toString();
                     }
                     if (cmd.mode == "-emit-llvm-bc" && output) {
-                        let convertCmd = await Command.createfromString('clang -S -emit-llvm "' + output + '" -o -');
+                        let convertCmd = await Command.createfromString(
+                                                'clang -S -emit-llvm "' + output + '" -o -');
                         if (convertCmd) {
                             const { stdout, stderr } = await convertCmd.run();
                             this.llvm = stdout;
@@ -85,12 +91,14 @@ export class Pipeline {
                 if (sharp2 !== undefined) {
                     console.log("sharp mismatch: " + sharp + " " + sharp2);
                 }
-                this.passList.push(new Pass(name.substring(15), ir, ir2, this.passList.length, false));
+                this.passList.push(new Pass(
+                    this, name.substring(15), ir, ir2, this.passList.length, false));
             } else {
                 if (sharp !== "# ") {
                     console.log("sharp mismatch: " + sharp + " " + sharp2);
                 }
-                this.backendList.push(new Pass(name.substring(15), ir, ir2, this.backendList.length, true));
+                this.backendList.push(new Pass(
+                    this, name.substring(15), ir, ir2, this.backendList.length, true));
             }
         }
     }
@@ -104,6 +112,10 @@ export class Core {
     private provider?: LLVMPipelineTreeDataProvider;
     public filter = "";
 
+    public get(cmd: string) {
+        return this.pipelines.get(cmd);
+    }
+
     public setProvider(provider: LLVMPipelineTreeDataProvider) {
         this.provider = provider;
     }
@@ -113,7 +125,7 @@ export class Core {
         if (!command) { return; }
         if (cenv) { command.env = cenv; }
         if (this.filter != "") { command.setFilter(this.filter); }
-        let pipeline = new Pipeline(command);
+        let pipeline = new Pipeline(cmd, command);
         this.pipelines.set(cmd, pipeline);
         this.active = pipeline;
         await this.runWithProgress();
@@ -144,7 +156,6 @@ export class Core {
         });
     }
 
-
     // run debug-only for a pass and filiter the output for that one
     public async debugOnePass(pass: Pass) {
 
@@ -167,23 +178,24 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
 
     provideTextDocumentContent(uri: vscode.Uri) {
         console.log("provideTextDocumentContent", uri);
+        let { pipeline, catergory, index } = splitURI(uri);
 
-        if (uri.path === '/output') {
-            return this.core.active?.output;
-        } else if (uri.path === '/ast') {
-            return this.core.active?.ast;
-        } else if (uri.path === '/preprocessed') {
-            return this.core.active?.preprocessed;
-        } else if (uri.path === '/llvm') {
-            return this.core.active?.llvm;
-        } else if (uri.path.indexOf('/before/') === 0) {
-            return this.core.active?.passList[Number(uri.path.slice(8))].before_ir;
-        } else if (uri.path.indexOf('/after/') === 0) {
-            return this.core.active?.passList[Number(uri.path.slice(7))].after_ir;
-        } else if (uri.path.indexOf('/before-b/') === 0) {
-            return this.core.active?.backendList[Number(uri.path.slice(10))].before_ir;
-        } else if (uri.path.indexOf('/after-b/') === 0) {
-            return this.core.active?.backendList[Number(uri.path.slice(9))].after_ir;
+        if (catergory == 'output') {
+            return this.core.get(pipeline)?.output;
+        } else if (catergory == 'ast') {
+            return this.core.get(pipeline)?.ast;
+        } else if (catergory == 'preprocessed') {
+            return this.core.get(pipeline)?.preprocessed;
+        } else if (catergory == 'llvm') {
+            return this.core.get(pipeline)?.llvm;
+        } else if (catergory == 'before') {
+            return this.core.get(pipeline)?.passList[index].before_ir;
+        } else if (catergory == 'after') {
+            return this.core.get(pipeline)?.passList[index].after_ir;
+        } else if (catergory == 'before-b') {
+            return this.core.get(pipeline)?.backendList[index].before_ir;
+        } else if (catergory == 'after-b') {
+            return this.core.get(pipeline)?.backendList[index].after_ir;
         }
     }
 }

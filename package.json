@@ -23,22 +23,30 @@
     "commands": [
       {
         "command": "llvmPipelineView.settings",
-        "title": "LLVM Pipeline View Settings",
+        "title": "LLVM: Pipeline View Settings",
         "icon": "$(gear)"
       },
       {
         "command": "llvmPipelineView.run",
-        "title": "LLVM Pipeline Run Compiliation",
+        "title": "LLVM: Pipeline Run Compiliation",
         "icon": "$(run)"
       },
       {
         "command": "llvmPipelineView.run-debug",
-        "title": "LLVM Pipeline Debug Compiliation",
+        "title": "LLVM: Pipeline Debug Compiliation",
         "icon": "$(bug)"
       },
       {
-        "command": "vscode-llvm.reloadConfig",
-        "title": "LLVM Pass Reload Configurations"
+        "command": "llvmPipelineView.openPreprocessed",
+        "title": "LLVM: Open Preprocessed File"
+      },
+      {
+        "command": "llvmPipelineView.openAST",
+        "title": "LLVM: Open AST"
+      },
+      {
+        "command": "llvmPipelineView.openLLVM",
+        "title": "LLVM: Open LLVM IR"
       }
     ],
     "viewsContainers": {

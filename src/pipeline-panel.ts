@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { Core, Pass } from './core';
 import { FileDecoration, FileDecorationProvider, ProviderResult, ThemeColor, Uri } from "vscode";
+import { splitURI } from './utils';
 
 /** This class will decorate the tree view and dim the item when the IRs are same */
 export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationProvider {
@@ -13,16 +14,16 @@ export class LLVMPipelineTreeItemDecorationProvider implements FileDecorationPro
 	public provideFileDecoration(uri: Uri): ProviderResult<FileDecoration> {
 		if (uri.scheme !== "vscode-llvm") return;
 
-		if (uri.path.startsWith('/before/')) {
-			let k = Number(uri.path.slice(8));
-			if (this.core.active?.passList[k].same) {
+		let { pipeline, catergory, index } = splitURI(uri);
+
+		if (catergory == 'before') {
+			if (this.core.get(pipeline)?.passList[index].same) {
 				return { color: this.dimColor };
 			}
 		}
 
-		if (uri.path.startsWith('/before-b/')) {
-			let k = Number(uri.path.slice(10));
-			if (this.core.active?.backendList[k].same) {
+		if (catergory == 'before-b') {
+			if (this.core.get(pipeline)?.backendList[index].same) {
 				return { color: this.dimColor };
 			}
 		}
@@ -58,22 +59,22 @@ export class PipelineNode {
 			if (this.label === 'input') {
 				let name = core.active.command.getInputPath();
 				if (name) {
-					let src = new PipelineNode(name, this);
+					new PipelineNode(name, this);
 				}
 			}
 			if (this.label === 'front end') {
-				let i = new PipelineNode("after preprocessing", this);
-				let ast = new PipelineNode("Clang AST", this);
-				let ir = new PipelineNode("LLVM IR", this);
+				new PipelineNode("After Preprocessing", this);
+				new PipelineNode("Clang AST", this);
+				new PipelineNode("LLVM IR", this);
 			}
 			if (this.label === 'middle end') {
 				for (let pass of core.active.passList) {
-					let p = new PipelineNode(pass.name, this, pass);
+					new PipelineNode(pass.name, this, pass);
 				}
 			}
 			if (this.label === 'back end') {
 				for (let pass of core.active.backendList) {
-					let p = new PipelineNode(pass.name, this, pass);
+					new PipelineNode(pass.name, this, pass);
 				}
 			}
 		}
@@ -99,7 +100,7 @@ export class PipelineNode {
 					arguments: [this.pass],
 					title: 'Open Pipeline Compare View'
 				};
-			} else if (this.label === 'after preprocessing') {
+			} else if (this.label === 'After Preprocessing') {
 				cmd = {
 					command: 'llvmPipelineView.openPreprocessed',
 					title: 'Open Preprocessed'
@@ -117,16 +118,18 @@ export class PipelineNode {
 			}
 		}
 
-		// An example of how to use codicons in a MarkdownString in a tree item tooltip.
 		const tooltip = new vscode.MarkdownString(`$(zap) Tooltip for ${this.label}`, true);
 		return {
 			label: { label: this.label },
 			tooltip,
 			collapsibleState: core.active ?
-				(this.getChildren(core).length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None)
+				(this.getChildren(core).length > 0 ?
+					vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None)
 				: vscode.TreeItemCollapsibleState.None,
 			command: cmd,
-			resourceUri: this.pass ? vscode.Uri.parse(`vscode-llvm:/before${this.pass.backend ? "-b" : ""}/${this.pass.index}`) : undefined
+			resourceUri: this.pass ? vscode.Uri.parse(
+				`vscode-llvm:/${encodeURIComponent(this.pass.parent.raw_command)}/`+
+				`before${this.pass.backend ? "-b" : ""}/${this.pass.index}`) : undefined
 		};
 	}
 };

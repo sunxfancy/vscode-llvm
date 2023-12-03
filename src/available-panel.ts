@@ -31,7 +31,7 @@ export class AvailableNode {
 				}
 			}
 			if (this.label === 'front end') {
-				let i = new AvailableNode("after preprocessing", this);
+				let i = new AvailableNode("After Preprocessing", this);
 				let ast = new AvailableNode("Clang AST", this);
 				let ir = new AvailableNode("LLVM IR", this);
 			}
@@ -68,7 +68,7 @@ export class AvailableNode {
 					arguments: [this.pass],
 					title: 'Open Pipeline Compare View'
 				};
-			} else if (this.label === 'after preprocessing') {
+			} else if (this.label === 'After Preprocessing') {
 				cmd = {
 					command: 'llvmPipelineView.openPreprocessed',
 					title: 'Open Preprocessed'
