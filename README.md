@@ -17,8 +17,9 @@ This is a tool for compiler developers of LLVM. This vscode extension can suppor
 
 ![](./doc/step2.png)
 
-3. Then, click the command name to run the command
-4. Now, you can explore the IRs after each pass
+3. (Optional) If you want to focus on one function. You can type the function name in the 'filter function' field. Please note, this function name should be mangle name if it's C++.
+4. Then, click the command name to run the command.
+5. Now, you can explore the IRs after each pass.
 
 ![](./doc/pass-view.png)
 
