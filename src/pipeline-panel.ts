@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Core, Pass } from './core';
+import { ComparedPipeline, Core, Pass } from './core';
 import { FileDecoration, FileDecorationProvider, ProviderResult, ThemeColor, Uri } from "vscode";
 import { splitURI } from './utils';
 
@@ -39,7 +39,8 @@ export class PipelineNode {
 	constructor(
 		private label: string,
 		private parent?: PipelineNode,
-		private pass?: Pass) {
+		private pass?: Pass,
+		private pass2?: Pass) {
 		parent?.children.push(this);
 	}
 
@@ -49,6 +50,46 @@ export class PipelineNode {
 
 	public isLeaf() {
 		return this.getParent() ? true : false;
+	}
+
+	public createNodeForDiff(core: Core, passList1?: Pass[], passList2?: Pass[]) {
+		if (!passList1 || !passList2) return;
+
+		let theSame = new PipelineNode("The Same", this);
+		let diff = new PipelineNode("Different", this);
+
+		let min = Math.min(passList1.length, passList2.length);
+		let i = 0;
+		for (; i < min; ++i) {
+			let pass1 = passList1[i];
+			let pass2 = passList2[i];
+			if (pass1.name === pass2.name &&
+				pass1.before_ir === pass2.before_ir &&
+					pass1.after_ir === pass2.after_ir) {
+				new PipelineNode(pass1.name, theSame, pass1);
+			} else {
+				break;
+			}
+		}
+
+		let diff0 = new PipelineNode("Different in Common", diff);
+		for (let j = i; j < min; ++j) {
+			let pass1 = passList1[j];
+			let pass2 = passList2[j];
+			new PipelineNode(pass1.name + " vs " + pass2.name, diff0, pass1, pass2);
+		}
+
+		let diff1 = new PipelineNode("Different in 1", diff);
+		for (let j = i; j < passList1.length; ++j) {
+			let pass1 = passList1[j];
+			new PipelineNode(pass1.name, diff1, pass1);
+		}
+
+		let diff2 = new PipelineNode("Different in 2", diff);
+		for (let j = min; j < passList2.length; ++j) {
+			let pass2 = passList2[j];
+			new PipelineNode(pass2.name, diff2, pass2);
+		}
 	}
 
 	public getChildren(core: Core) {
@@ -68,13 +109,27 @@ export class PipelineNode {
 				new PipelineNode("LLVM IR", this);
 			}
 			if (this.label === 'middle end') {
-				for (let pass of core.active.passList) {
-					new PipelineNode(pass.name, this, pass);
+				if (core.active?.isCompare() == false) {
+					for (let pass of core.active.passList) {
+						new PipelineNode(pass.name, this, pass);
+					}
+				} else {
+					let active = (core.active as ComparedPipeline);
+					let passList1 = active.linked_pipeline?.passList;
+					let passList2 = active.linked_pipeline2?.passList;
+					this.createNodeForDiff(core, passList1, passList2);
 				}
 			}
 			if (this.label === 'back end') {
-				for (let pass of core.active.backendList) {
-					new PipelineNode(pass.name, this, pass);
+				if (core.active?.isCompare() == false) {
+					for (let pass of core.active.backendList) {
+						new PipelineNode(pass.name, this, pass);
+					}
+				} else {
+					let active = (core.active as ComparedPipeline);
+					let passList1 = active.linked_pipeline?.backendList;
+					let passList2 = active.linked_pipeline2?.backendList;
+					this.createNodeForDiff(core, passList1, passList2);
 				}
 			}
 		}
@@ -95,11 +150,20 @@ export class PipelineNode {
 					title: 'Open Output'
 				};
 			} else if (this.pass) {
-				cmd = {
-					command: 'llvmPipelineView.open',
-					arguments: [this.pass],
-					title: 'Open Pipeline Compare View'
-				};
+				if (this.pass2 === undefined) {
+					cmd = {
+						command: 'llvmPipelineView.open',
+						arguments: [this.pass],
+						title: 'Open Pipeline Compare View'
+					};
+				} else {
+					cmd = {
+						command: 'llvmPipelineView.openCompare',
+						arguments: [this.pass, this.pass2],
+						title: 'Open Pipeline Compare View'
+					};
+				}
+
 			} else if (this.label === 'After Preprocessing') {
 				cmd = {
 					command: 'llvmPipelineView.openPreprocessed',
@@ -127,6 +191,8 @@ export class PipelineNode {
 					vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None)
 				: vscode.TreeItemCollapsibleState.None,
 			command: cmd,
+
+			// TODO: change this uri for the different in common node.
 			resourceUri: this.pass ? vscode.Uri.parse(
 				`vscode-llvm:/${encodeURIComponent(this.pass.parent.raw_command)}/`+
 				`before${this.pass.backend ? "-b" : ""}/${this.pass.index}`) : undefined

@@ -146,7 +146,15 @@
     }
 
     function runCompare() {
-        vscode.postMessage({ type: 'compare', value: configs });
+        let new_configs = [];
+        const checkboxes = document.querySelectorAll('.command-checkbox');
+        for (let i = checkboxes.length-1; i >= 0; i--) {
+            if (checkboxes[i].checked) {
+                new_configs.push(configs[i]);
+            }
+        }
+                
+        vscode.postMessage({ type: 'compare', value: new_configs });
     }
 }());
 

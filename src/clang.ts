@@ -63,7 +63,7 @@ export class Command {
         return Command.create(commands);
     }
 
-    public async run(addition?: string[]): Promise<{ code: number | null, stdout: string, stderr: string }> {
+    public async run(addition?: string[], stdin?: string): Promise<{ code: number | null, stdout: string, stderr: string }> {
         let env = this.env;
         if (env === undefined) {
             env = CommandEnv.getDefault();
@@ -72,7 +72,7 @@ export class Command {
         if (addition) {
             args = args.concat(addition);
         }
-        return env.run(this.exe, args);
+        return env.run(this.exe, args, stdin);
     }
     public getInputPath(): string | undefined { return undefined; }
     public getOutputPath(): string | undefined { return undefined; }
@@ -224,12 +224,20 @@ export class ClangCommand extends Command {
             args = args.concat(["-g"]);
         }
 
+        if (this.bDisableOptnone) {
+            args = args.concat(["-Xclang", "-disable-O0-optnone"]);
+        }
+
         if (this.bSaveTemps) {
             args = args.concat(["-save-temps"]);
         }
 
         if (this.sFilter) {
             args = args.concat(["-mllvm", "-filter-print-funcs=" + this.sFilter]);
+        }
+
+        if (this.bPrintModuleScope) {
+            args = args.concat(["-mllvm", "-print-module-scope"]);
         }
 
         if (this.bPrintBefore) {
@@ -275,11 +283,15 @@ export class ClangCommand extends Command {
         return "ClangCommand";
     }
 
+
+    // Here is a list of configurable options
     public bInputFromStdin = false;
     public bSaveTemps = true;
     public bOutputToStdout = true;
+    public bDisableOptnone = true;
     public bDebug = false;
     public sFilter?: string;
+    public bPrintModuleScope = true;
     public bPrintBefore = true;
     public bPrintAfter = true;
     public mode?: string;
@@ -319,7 +331,7 @@ export class CommandEnv {
         }
     }
 
-    public async run(exe: string, args: string[]): Promise<{ code: number | null, stdout: string, stderr: string }> {
+    public async run(exe: string, args: string[], stdin?: string): Promise<{ code: number | null, stdout: string, stderr: string }> {
         return new Promise((resolve, reject) => {
             let stderr: string[] = [];
             let stdout: string[] = [];
@@ -336,6 +348,10 @@ export class CommandEnv {
             run.on('error', (err) => {
                 reject(err);
             });
+            if (stdin) {
+                run.stdin.write(stdin);
+                run.stdin.end();
+            }
         });
     }
 

@@ -20,8 +20,7 @@ export class Pass {
 
 
 export class Pipeline {
-    public isCompare: boolean = false;
-    public raw_command: string = "";
+    public raw_command: string;
     public command: Command;
 
     public input: string = "";
@@ -33,7 +32,7 @@ export class Pipeline {
     public passList: Pass[] = [];
     public backendList: Pass[] = [];
 
-    constructor(raw: string, cmd: Command) {
+    constructor(raw: string, cmd: Command,) {
         this.raw_command = raw;
         this.command = cmd;
     }
@@ -53,7 +52,7 @@ export class Pipeline {
                     }
                     if (cmd.mode == "-emit-llvm-bc" && output) {
                         let convertCmd = await Command.createfromString(
-                                                'clang -S -emit-llvm "' + output + '" -o -');
+                            'clang -S -emit-llvm "' + output + '" -o -');
                         if (convertCmd) {
                             const { stdout, stderr } = await convertCmd.run();
                             this.llvm = stdout;
@@ -103,12 +102,26 @@ export class Pipeline {
         }
     }
 
+    public isCompare() {
+        return false;
+    }
+}
+
+export class ComparedPipeline extends Pipeline {
+    constructor(raw: string, cmd: Command,
+        public linked_pipeline?: Pipeline, public linked_pipeline2?: Pipeline) {
+        super(raw, cmd);
+    }
+
+    public isCompare() {
+        return true;
+    }
 }
 
 export class Core {
+
     private pipelines: Map<string, Pipeline> = new Map();
     public active?: Pipeline;
-    public activeCmd: string | undefined;
     private provider?: LLVMPipelineTreeDataProvider;
     public filter = "";
 
@@ -143,6 +156,26 @@ export class Core {
         await this.runPipeline(cmd, cenv);
     }
 
+    public async comparePipeline(cmd1: string, cmd2: string, cenv?: CommandEnv) {
+        let cmd = cmd1 + " vs " + cmd2;
+        if (this.pipelines.has(cmd)) {
+            this.active = this.pipelines.get(cmd);
+            this.provider?.refresh();
+            return;
+        }
+
+        await this.ensurePipeline(cmd1, cenv);
+        await this.ensurePipeline(cmd2, cenv);
+        let command = await Command.createfromString("compare");
+        if (!command) { return; }
+
+        let pipeline = new ComparedPipeline(cmd, command,
+            this.pipelines.get(cmd1), this.pipelines.get(cmd2));
+        this.pipelines.set(cmd, pipeline);
+        this.active = pipeline;
+        this.provider?.refresh();
+    }
+
     public async runWithProgress() {
         let pipeline = this.active;
         return vscode.window.withProgress({
@@ -158,10 +191,6 @@ export class Core {
 
     // run debug-only for a pass and filiter the output for that one
     public async debugOnePass(pass: Pass) {
-
-    }
-
-    public async ensureComparePipeline(cmd: Command, cmd2: Command) {
 
     }
 

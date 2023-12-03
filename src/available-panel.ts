@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import { Core, Pass } from './core';
-
 
 /**
  * This class provides the content for the tree view.
@@ -10,42 +8,38 @@ export class AvailableNode {
 
 	constructor(
 		private label: string,
-		private parent?: AvailableNode,
-		private pass?: Pass) {
+		private command?: string,
+		private parent?: AvailableNode) {
 		parent?.children.push(this);
+	}
+
+	public removeChildren() {
+		this.children = [];
 	}
 
 	public isLeaf() {
 		return this.getParent() ? true : false;
 	}
 
-	public getChildren(core: Core) {
+	public getChildren() {
 		if (this.children.length > 0) {
 			return this.children;
 		}
-		if (core.active) {
-			if (this.label === 'input') {
-				let name = core.active.command.getInputPath();
-				if (name) {
-					let src = new AvailableNode(name, this);
-				}
-			}
-			if (this.label === 'front end') {
-				let i = new AvailableNode("After Preprocessing", this);
-				let ast = new AvailableNode("Clang AST", this);
-				let ir = new AvailableNode("LLVM IR", this);
-			}
-			if (this.label === 'middle end') {
-				for (let pass of core.active.passList) {
-					let p = new AvailableNode(pass.name, this, pass);
-				}
-			}
-			if (this.label === 'back end') {
-				for (let pass of core.active.backendList) {
-					let p = new AvailableNode(pass.name, this, pass);
-				}
-			}
+
+		if (this.label === 'print passes') {
+			new AvailableNode("Print Call Graph", "-passes=dot-callgraph -disable-output", this);
+			new AvailableNode("Print Control Flow Graph", "-passes=dot-cfg -disable-output", this);
+			new AvailableNode("Print Simple CFG", "-passes=dot-cfg-only -disable-output", this);
+			new AvailableNode("Print Dominance Tree", "-passes=dot-dom -disable-output", this);
+			new AvailableNode("Print Simple DOM Tree", "-passes=dot-dom-only -disable-output", this);
 		}
+
+		if (this.label === 'transform passes') {
+			new AvailableNode("Promote Memory to Register (mem2reg - SSA construction)", "-passes=mem2reg", this);
+			new AvailableNode("Demote All Values to Stack Slots (reg2mem)", "-passes=reg2mem", this);
+			new AvailableNode("Dead Code Elimination", "-passes=dce", this);
+		}
+
 		return this.children;
 	}
 
@@ -53,64 +47,37 @@ export class AvailableNode {
 		return this.parent;
 	}
 
-	public getTreeItem(core: Core): vscode.TreeItem {
-		var cmd;
-		if (!this.getParent() && this.label != 'output') { cmd = void 0; }
-		else {
-			if (this.label === 'output') {
-				cmd = {
-					command: 'llvmPipelineView.openOutput',
-					title: 'Open Output'
-				};
-			} else if (this.pass) {
-				cmd = {
-					command: 'llvmPipelineView.open',
-					arguments: [this.pass],
-					title: 'Open Pipeline Compare View'
-				};
-			} else if (this.label === 'After Preprocessing') {
-				cmd = {
-					command: 'llvmPipelineView.openPreprocessed',
-					title: 'Open Preprocessed'
-				};
-			} else if (this.label === 'Clang AST') {
-				cmd = {
-					command: 'llvmPipelineView.openAST',
-					title: 'Open AST'
-				};
-			} else if (this.label === 'LLVM IR') {
-				cmd = {
-					command: 'llvmPipelineView.openLLVM',
-					title: 'Open LLVM IR'
-				};
-			}
-		}
+	public getTreeItem(): vscode.TreeItem {
+		let cmd = {
+			title: 'Run Available Pass',
+			command: 'llvmAvailableView.runAvailPass',
+			arguments: [this.command]
+		};
 
-		// An example of how to use codicons in a MarkdownString in a tree item tooltip.
 		const tooltip = new vscode.MarkdownString(`$(zap) Tooltip for ${this.label}`, true);
 		return {
-			label: /**vscode.TreeItemLabel**/<any>{ label: this.label },
+			label: { label: this.label },
 			tooltip,
-			collapsibleState: core.active ?
-				(this.getChildren(core).length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None)
-				: vscode.TreeItemCollapsibleState.None,
-			command: cmd,
-			resourceUri: this.pass ? vscode.Uri.parse(`vscode-llvm:/before${this.pass.backend ? "-b" : ""}/${this.pass.index}`) : undefined
+			collapsibleState:
+				this.getChildren().length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+			command: cmd
 		};
 	}
 };
 
 
 export class LLVMAvailablePassDataProvider implements vscode.TreeDataProvider<AvailableNode> {
-	constructor(private core: Core, subscriptions: vscode.Disposable[]) {
-		// core.setProvider(this);
+	constructor(subscriptions: vscode.Disposable[]) {
 		subscriptions.push(vscode.window.createTreeView(
-			'llvm-pipeline-view', { treeDataProvider: this, showCollapseAll: true }));
+			'llvm-pass-view', { treeDataProvider: this, showCollapseAll: true }));
 	}
 	private _onDidChangeTreeData = new vscode.EventEmitter<AvailableNode | undefined | null | void>();
 	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
 	public refresh(): void {
+		for (let node of LLVMAvailablePassDataProvider.tree_nodes) {
+			node.removeChildren();
+		}
 		this._onDidChangeTreeData.fire();
 	}
 
@@ -118,12 +85,12 @@ export class LLVMAvailablePassDataProvider implements vscode.TreeDataProvider<Av
 		if (!element) {
 			return LLVMAvailablePassDataProvider.tree_nodes;
 		} else {
-			return element.getChildren(this.core);
+			return element.getChildren();
 		}
 	}
 
 	getTreeItem(element: AvailableNode): vscode.TreeItem {
-		return element.getTreeItem(this.core);
+		return element.getTreeItem();
 	}
 
 	getParent(element: AvailableNode) {
@@ -131,10 +98,7 @@ export class LLVMAvailablePassDataProvider implements vscode.TreeDataProvider<Av
 	}
 
 	static readonly tree_nodes = [
-		new AvailableNode('input'),
-		new AvailableNode('front end'),
-		new AvailableNode('middle end'),
-		new AvailableNode('back end'),
-		new AvailableNode('output')
+		new AvailableNode('print passes'),
+		new AvailableNode('transform passes'),
 	];
 }

@@ -4,9 +4,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { ConfigViewProvider } from './control-panel';
 import { LLVMPipelineTreeDataProvider, LLVMPipelineTreeItemDecorationProvider } from './pipeline-panel';
+import { LLVMAvailablePassDataProvider } from './available-panel';
 import { Core, Pass, PipelineContentProvider } from './core';
 import { Debug } from './debug';
 import { checkFileExists, ensurePropertiesFile } from './config';
+import { Command } from './clang';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -33,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	new LLVMPipelineTreeDataProvider(core, context.subscriptions);
 	new PipelineContentProvider(core, context.subscriptions);
 	new LLVMPipelineTreeItemDecorationProvider(core, context.subscriptions);
+	new LLVMAvailablePassDataProvider(context.subscriptions);
 
 	registerCommand('vscode-llvm.reloadConfig', () => {
 		provider.reloadConfig();
@@ -57,42 +60,65 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommand('llvmPipelineView.open', async (...args) => {
 		console.log(args);
 		let pass = args[0] as Pass;
-		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/before${pass.backend ? "-b" : ""}/${pass.index}`));
-		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
+		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(
+			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/before${pass.backend ? "-b" : ""}/${pass.index}`));
+		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(
+			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
 		vscode.languages.setTextDocumentLanguage(doc, 'llvm');
 		vscode.languages.setTextDocumentLanguage(doc2, 'llvm');
 		console.log("openPipelineView vscode.diff");
 		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
 	});
+
+	registerCommand('llvmPipelineView.openCompare', async (...args) => {
+		console.log(args);
+		let pass = args[0] as Pass;
+		let pass2 = args[1] as Pass;
+		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(
+			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
+		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(
+			`vscode-llvm:/${encodeURIComponent(pass2.parent.raw_command)}/after${pass2.backend ? "-b" : ""}/${pass2.index}`));
+		vscode.languages.setTextDocumentLanguage(doc, 'llvm');
+		vscode.languages.setTextDocumentLanguage(doc2, 'llvm');
+		console.log("openPipelineView vscode.diff");
+		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
+	});
+
 	registerCommand('llvmPipelineView.ensure', async (...args) => {
-		if (core.activeCmd) {
-			core.activeCmd = core.activeCmd.trim();
+		let activeCmd = args[0] as string;
+		if (activeCmd && activeCmd.length > 0) {
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 				process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
 			console.log("current dir:", process.cwd());
-
-			core.ensurePipeline(core.activeCmd);
+			core.ensurePipeline(activeCmd);
 		}
 	});
 
 	registerCommand('llvmPipelineView.run', async (...args) => {
-		if (core.activeCmd) {
-			core.activeCmd = core.activeCmd.trim();
+		let activeCmd = args[0] as string;
+		if (activeCmd && activeCmd.length > 0) {
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 				process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
 			console.log("current dir:", process.cwd());
-
-			core.runPipeline(core.activeCmd);
+			core.runPipeline(activeCmd);
 		}
 	});
 
-
 	registerCommand('llvmPipelineView.run-debug', async (...args) => {
-		if (vscode.window.activeTextEditor && core.activeCmd && core.active) {
-
+		if (vscode.window.activeTextEditor && core.active) {
 			let debugConfig = new Debug();
 			debugConfig.saveConfig(core.active);
 		}
+	});
+
+	registerCommand('llvmPipelineView.compare', async (...args) => {
+		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
+			process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
+		console.log("current dir:", process.cwd());
+
+		let cmd1 = args[0] as string;
+		let cmd2 = args[1] as string;
+		core.comparePipeline(cmd1, cmd2);
 	});
 
 	function registerCommandForUri(cmd: string, component: string) {
@@ -110,7 +136,35 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommandForUri('llvmPipelineView.openAST', "ast");
 	registerCommandForUri('llvmPipelineView.openPreprocessed', "preprocessed");
 	registerCommandForUri('llvmPipelineView.openLLVM', "llvm");
+
+	registerCommand('llvmAvailableView.runAvailPass', async (...args) => {
+		if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0)
+			return;
+
+		process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
+		// get the current open file
+		let editor = vscode.window.activeTextEditor;
+		if (!editor && args.length == 0) return;
+
+		let pass = args[0] as string;
+
+		let cmd = await Command.createfromString('opt-15 -S ' + pass + ' -o -');
+		if (cmd == undefined) return;
+		const { stdout, stderr } = await cmd.run(undefined, editor?.document.getText());
+		if (stdout && stdout.length > 0) {
+			let outdoc = await vscode.workspace.openTextDocument({ content: stdout, language: 'llvm' });
+			await vscode.window.showTextDocument(outdoc, undefined, true);
+		}
+
+		if (pass.indexOf('dot') != -1) {
+			let result = stderr.match(/Writing '(.*)'.../g);
+			if (result && result.length == 1) {
+				vscode.window.showInformationMessage(result[0]);
+			}
+		}
+	});
+
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

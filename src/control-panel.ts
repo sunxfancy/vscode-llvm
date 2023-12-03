@@ -29,11 +29,15 @@ export class ConfigViewProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
 				case 'select': {
-					this.core.activeCmd = data.value;
-					vscode.commands.executeCommand('llvmPipelineView.ensure');
+					vscode.commands.executeCommand('llvmPipelineView.ensure', data.value.trim());
 					break;
 				}
 				case 'compare': {
+					if (!data.value || data.value.length != 2) {
+						vscode.window.showErrorMessage('Please select two configs to compare');
+						break;
+					}
+					vscode.commands.executeCommand('llvmPipelineView.compare', data.value[0].value, data.value[1].value);
 					break;
 				}
 				case 'new': {
