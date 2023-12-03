@@ -146,7 +146,9 @@ export class PipelineNode {
 		else {
 			if (this.label === 'output') {
 				cmd = {
-					command: 'llvmPipelineView.openOutput',
+					// command: 'llvmPipelineView.openOutput',
+					// Now, we use AsmView instead the old output view.
+					command: 'llvmAsmView.openOutput',
 					title: 'Open Output'
 				};
 			} else if (this.pass) {

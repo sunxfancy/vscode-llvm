@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { CC1Command, ClangCommand, Command, CommandEnv } from './clang';
 import { LLVMPipelineTreeDataProvider } from './pipeline-panel';
 import { splitURI } from './utils';
+import { AsmDocument } from './document';
 import * as vscode from 'vscode';
 
 export class Pass {
@@ -210,7 +211,7 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
         let { pipeline, catergory, index } = splitURI(uri);
 
         if (catergory == 'output') {
-            return this.core.get(pipeline)?.output;
+            return this.provideAsmDocument(uri)?.value;
         } else if (catergory == 'ast') {
             return this.core.get(pipeline)?.ast;
         } else if (catergory == 'preprocessed') {
@@ -226,5 +227,26 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
         } else if (catergory == 'after-b') {
             return this.core.get(pipeline)?.backendList[index].after_ir;
         }
+    }
+
+    private _documents = new Map<string, AsmDocument>();
+    provideAsmDocument(uri: vscode.Uri): AsmDocument | undefined{
+        let document = this._documents.get(uri.path);
+        if (!document) {
+            let { pipeline, catergory, index } = splitURI(uri);
+
+            if (catergory == 'output') {
+                let output = this.core.get(pipeline)?.output;
+                if (!output) { return; }
+                document = new AsmDocument(uri, output);
+                this._documents.set(uri.path, document);
+            }
+        }
+        return document;
+    }
+
+    private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+    get onDidChange(): vscode.Event<vscode.Uri> {
+        return this._onDidChange.event;
     }
 }

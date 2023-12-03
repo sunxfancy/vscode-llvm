@@ -9,6 +9,7 @@ import { Core, Pass, PipelineContentProvider } from './core';
 import { Debug } from './debug';
 import { checkFileExists, ensurePropertiesFile } from './config';
 import { Command } from './clang';
+import { AsmDecorator } from './decorator';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -33,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	let core = new Core();
 	const provider = new ConfigViewProvider(context.extensionUri, core, context.subscriptions);
 	new LLVMPipelineTreeDataProvider(core, context.subscriptions);
-	new PipelineContentProvider(core, context.subscriptions);
+	let contentProvider = new PipelineContentProvider(core, context.subscriptions);
 	new LLVMPipelineTreeItemDecorationProvider(core, context.subscriptions);
 	new LLVMAvailablePassDataProvider(context.subscriptions);
 
@@ -57,9 +58,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	registerCommand('llvmPipelineView.open', async (...args) => {
-		console.log(args);
-		let pass = args[0] as Pass;
+	registerCommand('llvmPipelineView.open', async (pass: Pass) => {
 		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(
 			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/before${pass.backend ? "-b" : ""}/${pass.index}`));
 		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(
@@ -70,10 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
 	});
 
-	registerCommand('llvmPipelineView.openCompare', async (...args) => {
-		console.log(args);
-		let pass = args[0] as Pass;
-		let pass2 = args[1] as Pass;
+	registerCommand('llvmPipelineView.openCompare', async (pass: Pass, pass2: Pass) => {
 		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(
 			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
 		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(
@@ -84,8 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand("vscode.diff", doc.uri, doc2.uri);
 	});
 
-	registerCommand('llvmPipelineView.ensure', async (...args) => {
-		let activeCmd = args[0] as string;
+	registerCommand('llvmPipelineView.ensure', async (activeCmd: string) => {
 		if (activeCmd && activeCmd.length > 0) {
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 				process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
@@ -94,8 +89,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	registerCommand('llvmPipelineView.run', async (...args) => {
-		let activeCmd = args[0] as string;
+	registerCommand('llvmPipelineView.run', async (activeCmd: string) => {
 		if (activeCmd && activeCmd.length > 0) {
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 				process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
@@ -104,20 +98,18 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	registerCommand('llvmPipelineView.run-debug', async (...args) => {
+	registerCommand('llvmPipelineView.run-debug', async () => {
 		if (vscode.window.activeTextEditor && core.active) {
 			let debugConfig = new Debug();
 			debugConfig.saveConfig(core.active);
 		}
 	});
 
-	registerCommand('llvmPipelineView.compare', async (...args) => {
+	registerCommand('llvmPipelineView.compare', async (cmd1: string, cmd2: string) => {
 		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 			process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
 		console.log("current dir:", process.cwd());
 
-		let cmd1 = args[0] as string;
-		let cmd2 = args[1] as string;
 		core.comparePipeline(cmd1, cmd2);
 	});
 
@@ -137,16 +129,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommandForUri('llvmPipelineView.openPreprocessed', "preprocessed");
 	registerCommandForUri('llvmPipelineView.openLLVM', "llvm");
 
-	registerCommand('llvmAvailableView.runAvailPass', async (...args) => {
+	registerCommand('llvmAvailableView.runAvailPass', async (pass: string) => {
 		if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0)
 			return;
 
 		process.chdir(vscode.workspace.workspaceFolders[0].uri.fsPath);
 		// get the current open file
 		let editor = vscode.window.activeTextEditor;
-		if (!editor && args.length == 0) return;
-
-		let pass = args[0] as string;
+		if (!editor) return;
 
 		// TODO: make opt-15 configurable
 		let cmd = await Command.createfromString('opt-15 -S ' + pass + ' -o -');
@@ -163,6 +153,40 @@ export async function activate(context: vscode.ExtensionContext) {
 				vscode.window.showInformationMessage(result[0]);
 			}
 		}
+	});
+
+
+	// AsmView gives a better experience than the old output view.
+	// It shows side-by-side source code and assembly code.
+	// It also highlights the corresponding lines in assembly code when you select a line in source code.
+
+	registerCommand('llvmAsmView.openOutput', async () => {
+		let input = core.active?.command.getInputPath();
+		if (!input) return;
+		let raw = core.active?.raw_command;
+		if (!raw) return;
+
+		// get the path if it is not absolute
+		if (!path.isAbsolute(input)) {
+			if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0)
+				return;
+			input = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, input);
+		}
+
+		// open the file in workspace
+		let srcDoc  = await vscode.workspace.openTextDocument(input);
+		let srcEditor  = await vscode.window.showTextDocument(srcDoc, { preserveFocus: true, preview: true });
+		
+		const asmUri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/output`);
+
+		const options = {
+			viewColumn: srcEditor.viewColumn! + 1,
+			preserveFocus: true,
+		};
+
+		let asmEditor = await vscode.window.showTextDocument(asmUri, options);
+		const decorator = new AsmDecorator(srcEditor, asmEditor, contentProvider);
+		setTimeout(() => decorator.updateSelection(srcEditor), 500);
 	});
 
 }

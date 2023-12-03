@@ -1,16 +1,39 @@
+// MIT License
+
+// Copyright (c) 2018-present Dmitry Gerasimov and contributors
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+
 'use strict';
 
 import { TextEditor, window, TextEditorDecorationType, Range, ThemeColor, workspace, Uri, Disposable, TextEditorRevealType } from 'vscode';
-import { AsmProvider } from './provider';
 import { AsmDocument } from './document';
 import { AsmLine } from './asm';
 import * as path from 'path';
+import { PipelineContentProvider } from './core';
 
 export class AsmDecorator {
 
     private srcEditor: TextEditor;
     private asmEditor: TextEditor;
-    private provider: AsmProvider;
+    private provider: PipelineContentProvider;
     private selectedLineDecorationType: TextEditorDecorationType;
     private unusedLineDecorationType: TextEditorDecorationType;
     private registrations: Disposable;
@@ -19,7 +42,7 @@ export class AsmDecorator {
     // mappings from source lines to assembly lines
     private mappings = new Map<number, number[]>();
 
-    constructor(srcEditor: TextEditor, asmEditor: TextEditor, provider: AsmProvider) {
+    constructor(srcEditor: TextEditor, asmEditor: TextEditor, provider: PipelineContentProvider) {
         this.srcEditor = srcEditor;
         this.asmEditor = asmEditor;
         this.provider = provider;
@@ -64,11 +87,15 @@ export class AsmDecorator {
     }
 
     private load(uri: Uri) {
-        this.document = this.provider.provideAsmDocument(uri);
+        let document = this.provider.provideAsmDocument(uri);
+        if (document === undefined) return;
+        this.document = document;
+        
         this.loadMappings();
 
-        const dimUnused = workspace.getConfiguration('', this.srcEditor.document.uri)
-            .get('disasexpl.dimUnusedSourceLines', true);
+        // const dimUnused = workspace.getConfiguration('', this.srcEditor.document.uri)
+        //     .get('disasexpl.dimUnusedSourceLines', true);
+        const dimUnused = true;
 
         if (dimUnused) {
             this.dimUnusedSourceLines();

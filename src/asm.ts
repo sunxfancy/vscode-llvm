@@ -119,6 +119,7 @@ export class AsmParser {
     mipsLabelDefinition = /^\$[\w$.]+:/;
     dataDefn = /^\s*\.(string|asciz|ascii|[1248]?byte|short|x?word|long|quad|value|zero)/;
     fileFind = /^\s*\.file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
+    cvfileFind = /^\s*\.cv_file\s+(\d+)\s+"([^"]+)"(\s+"([^"]+)")?.*/;
     // Opcode expression here matches LLVM-style opcodes of the form `%blah = opcode`
     hasOpcodeRe = /^\s*(%[$.A-Z_a-z][\w$.]*\s*=\s*)?[A-Za-z]/;
     instructionRe = /^\s*[A-Za-z]+/;
@@ -331,6 +332,14 @@ export class AsmParser {
                 } else {
                     files.set(lineNum, match[2]);
                 }
+                continue;
+            } 
+
+            const cv_match = line.match(this.cvfileFind);
+            if (cv_match) {
+                const lineNum = parseInt(cv_match[1]);
+                // Clang-style file directive '.cv_file "filename"'
+                files.set(lineNum, cv_match[2]);
             }
         }
 
@@ -390,6 +399,7 @@ export class AsmParser {
         const commentOnlyNvcc = /^\s*(((#|;|\/\/).*)|(\/\*.*\*\/))$/;
         const sourceTag = /^\s*\.loc\s+(\d+)\s+(\d+)\s+(.*)/;
         const sourceD2Tag = /^\s*\.d2line\s+(\d+),?\s*(\d*).*/;
+        const sourceCvTag = /^\s*\.cv_loc\s+(\d+)\s+(\d+)(\s+(\d+))?(\s+(\d+))?(.*)/;
         const source6502Dbg = /^\s*\.dbg\s+line,\s*"([^"]+)",\s*(\d+)/;
         const source6502DbgEnd = /^\s*\.dbg\s+line[^,]/;
         const sourceStab = /^\s*\.stabn\s+(\d+),0,(\d+),.*/;
@@ -421,15 +431,36 @@ export class AsmParser {
                 } else {
                     source = undefined;
                 }
-            } else {
-                match = line.match(sourceD2Tag);
-                if (match) {
-                    const sourceLine = parseInt(match[1]);
+                return;
+            } 
+            match = line.match(sourceCvTag);
+            if (match && match[4]) {
+                const file = files.get(parseInt(match[2]));
+                const sourceLine = parseInt(match[4]);
+                if (file) {
                     source = new AsmSource(
-                        undefined,
-                        sourceLine,
+                        !stdInLooking.test(file) ? file : undefined,
+                        sourceLine
                     );
+                    if (match[6]) {
+                        const sourceCol = parseInt(match[6]);
+                        if (!isNaN(sourceCol) && sourceCol !== 0) {
+                            source.column = sourceCol;
+                        }
+                    }
+                } else {
+                    source = undefined;
                 }
+                return;
+            }
+            match = line.match(sourceD2Tag);
+            if (match) {
+                const sourceLine = parseInt(match[1]);
+                source = new AsmSource(
+                    undefined,
+                    sourceLine,
+                );
+                return;
             }
         }
 

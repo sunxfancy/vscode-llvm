@@ -1,56 +1,46 @@
+// MIT License
+
+// Copyright (c) 2018-present Dmitry Gerasimov and contributors
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+// Small changes maded by sunxfancy to make it work with our extension
+
 'use strict';
 
 import { workspace, Uri, EventEmitter, FileSystemWatcher } from 'vscode';
 import { AsmParser, AsmLine, AsmFilter } from './asm';
 
 export class AsmDocument {
-
     private _uri: Uri;
-    private _emitter: EventEmitter<Uri>;
-    private _watcher: FileSystemWatcher;
     lines: AsmLine[] = [];
     sourceToAsmMapping = new Map<number, number[]>();
 
-    constructor(uri: Uri, emitter: EventEmitter<Uri>) {
+    constructor(uri: Uri, doc: string, useBinaryParsing = false) {
+        const filter = new AsmFilter();
+        filter.binary = useBinaryParsing;
+        
+        this.lines = new AsmParser().process(doc, filter).asm;
         this._uri = uri;
-
-        // The AsmDocument has access to the event emitter from
-        // the containg provider. This allows it to signal changes
-        this._emitter = emitter;
-
-        // Watch for underlying assembly file and reload it on change
-        this._watcher = workspace.createFileSystemWatcher(uri.path);
-        this._watcher.onDidChange(() => this.updateLater());
-        this._watcher.onDidCreate(() => this.updateLater());
-        this._watcher.onDidDelete(() => this.updateLater());
-
-        this.update();
-    }
-
-    private updateLater() {
-        // Workarond for https://github.com/Microsoft/vscode/issues/72831
-        setTimeout(() => this.update(), 100);
-    }
-
-    private update() {
-        const useBinaryParsing = workspace.getConfiguration('', this._uri.with({scheme: 'file'}))
-            .get('disasexpl.useBinaryParsing', false);
-
-        workspace.openTextDocument(this._uri.with({ scheme: 'file' })).then(doc => {
-            const filter = new AsmFilter();
-            filter.binary = useBinaryParsing;
-            this.lines = new AsmParser().process(doc.getText(), filter).asm;
-        }, () => {
-            this.lines = [new AsmLine(`Failed to load file '${this._uri.path}'`, undefined, [])];
-        }).then(() => this._emitter.fire(this._uri));
     }
 
     get value(): string {
         return this.lines.reduce((result, line) => result += line.value, '');
     }
-
-    dispose(): void {
-        this._watcher.dispose();
-    }
-
 }
