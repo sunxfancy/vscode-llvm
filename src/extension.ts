@@ -148,6 +148,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		let pass = args[0] as string;
 
+		// TODO: make opt-15 configurable
 		let cmd = await Command.createfromString('opt-15 -S ' + pass + ' -o -');
 		if (cmd == undefined) return;
 		const { stdout, stderr } = await cmd.run(undefined, editor?.document.getText());
