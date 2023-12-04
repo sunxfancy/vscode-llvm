@@ -5,7 +5,7 @@ This is a tool for compiler developers of LLVM. This vscode extension can suppor
 
 ## Features
 
-1. Run a custom clang command and explore each phase of LLVM passes.
+1. Run a clang command and explore preprocessing phase, clang AST building phase, each phase of LLVM passes, and final generated assembly code.
 2. Compare difference between IRs before and after running a pass.
 3. Support custom clang or modified version.
 
@@ -35,4 +35,11 @@ To debug a pass, you may want to compare a clang command with and without the pa
 Inspired by Compiler Explorer, this extension can highlight the mapping between source code and the assembly code.
 
 ![](./doc/highlight.png)
+
+## Syntax Highlighting
+
+This plugin provides syntax highlighting for Clang AST and assembly language. You may need to install additional LLVM syntax highlighting plugins, there are some options:
+
+[RReverser.llvm](https://marketplace.visualstudio.com/items?itemName=RReverser.llvm)
+[colejcummins.llvm-syntax-highlighting](https://marketplace.visualstudio.com/items?itemName=colejcummins.llvm-syntax-highlighting)
 
