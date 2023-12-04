@@ -188,6 +188,12 @@ export class PipelineNode {
 					command: 'llvmPipelineView.openLLVM',
 					title: 'Open LLVM IR'
 				};
+			} else if (this.parent?.label === 'input') {
+				cmd = {
+					command: 'llvmPipelineView.openInput',
+					arguments: [this.label],
+					title: 'Open Input'
+				};
 			}
 		}
 

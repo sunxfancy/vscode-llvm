@@ -119,6 +119,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (component == "output") return "vscode-llvm.disassembly";
 			if (component == "preprocessed") return "cpp";
 			if (component == "llvm") return "llvm";
+			if (component == "ast") return "vscode-llvm.llvm-ast";
 			return "plaintext";
 		}
 
@@ -128,6 +129,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				if (!raw) return;
 				let uri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/${component}`);
 				let doc = await vscode.workspace.openTextDocument(uri);
+				vscode.languages.setTextDocumentLanguage(doc, getLanguage(component));
 				vscode.window.showTextDocument(doc, { preserveFocus: true, preview: true });
 			} else {
 				let cpipe = core.active as ComparedPipeline;
@@ -149,6 +151,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommandForUri('llvmPipelineView.openAST', "ast");
 	registerCommandForUri('llvmPipelineView.openPreprocessed', "preprocessed");
 	registerCommandForUri('llvmPipelineView.openLLVM', "llvm");
+
+	registerCommand('llvmPipelineView.openInput', async (file: string) => {
+		if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0)
+			return;
+		
+		if (!path.isAbsolute(file)) {
+			file = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, file);
+		}
+
+		let doc = await vscode.workspace.openTextDocument(file);
+		vscode.window.showTextDocument(doc, { preserveFocus: true, preview: true });
+	});
 
 	registerCommand('llvmAvailableView.runAvailPass', async (pass: string) => {
 		if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length == 0)

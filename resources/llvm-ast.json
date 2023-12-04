@@ -1,0 +1,41 @@
+{
+    "name": "LLVM AST",
+    "scopeName": "source.llvm-ast",
+    "patterns": [
+        {
+            "comment": "Numeric constant",
+            "name": "constant.numeric",
+            "match": "(\\$|\\b)((0x)|[0-9])[A-Za-z0-9]+\\b"
+        },
+        {
+            "comment": "Declaration",
+            "name": "entity.name",
+            "match": "[A-Za-z]+Decl"
+        },
+        {
+            "comment": "Type define",
+            "name": "support.type",
+            "match": "[A-Za-z]+Type"
+        },
+        {
+            "comment": "C keywords",
+            "name": "keyword.control",
+            "match": "struct|union|enum|typedef|auto|register|true|false|inline|__inline|__inline__|__restrict|__restrict__|__attribute__|__asm__|__asm|__typeof__|__typeof"
+        },
+        {
+            "comment": "C Types",
+            "name": "storage.type",
+            "match": "int|char|short|long|float|double|signed|unsigned|void|bool|complex|wint_t|__time64_t|uintptr_t|__int128|__uint128_t|imaginary|_Bool|_Complex|_Imaginary|_Bool|_Complex|_Imaginary"
+        },
+        {
+            "comment": "C Modifiers",
+            "name": "storage.modifier",
+            "match": "const|volatile|extern|static|__inline__|__inline|__extension__|__extension|__const__|__const|__volatile__|__volatile|__signed__|__signed"
+        },
+        {
+            "comment": "Names",
+            "name": "variable.parameter",
+            "match": "[A-Za-z_]+"
+        }
+    ]
+}

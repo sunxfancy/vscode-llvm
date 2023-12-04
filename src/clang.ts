@@ -133,7 +133,7 @@ export class CC1Command extends Command {
         if (this.output) { args.push("-o", this.output); }
         if (this.language) { args.push("-x", this.language); }
         if (this.input) { args.push(this.input); }
-        return this.args.concat();
+        return this.args.concat(args);
     }
 
     public getInputPath() {
@@ -224,6 +224,10 @@ export class ClangCommand extends Command {
             args = args.concat(["-g"]);
         }
 
+        if (this.bDumpAST && args.indexOf('-ast-dump') === -1) {
+            args = args.concat(["-Xclang", "-ast-dump"]);
+        }
+
         if (this.bDisableOptnone && args.indexOf('-disable-O0-optnone') === -1) {
             args = args.concat(["-Xclang", "-disable-O0-optnone"]);
         }
@@ -294,6 +298,7 @@ export class ClangCommand extends Command {
     public bPrintModuleScope = true;
     public bPrintBefore = true;
     public bPrintAfter = true;
+    public bDumpAST = false;
     public mode?: string;
 }
 

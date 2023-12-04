@@ -43,6 +43,7 @@ export class Pipeline {
         this.output = stdout;
         this.parseLLVMDump(stderr);
 
+        // Get the human-readable LLVM IR 
         if (this.command instanceof ClangCommand) {
             let c = this.command as ClangCommand;
             c.subCommands.forEach(async (cmd) => {
@@ -61,6 +62,25 @@ export class Pipeline {
                     }
                 }
             });
+        }
+
+        // Get the AST
+        if (this.command instanceof ClangCommand) {
+            let c = this.command as ClangCommand;
+            let cmd = await Command.createfromString(
+                "clang -fsyntax-only " + c.args.join(" ") + " " + c.input.join(" "));
+            if (cmd) {
+                let clangCmd = cmd as ClangCommand;
+                clangCmd.bDumpAST = true;
+                clangCmd.bDebug = false;
+                clangCmd.bDisableOptnone = false;
+                clangCmd.bPrintAfter = false;
+                clangCmd.bPrintBefore = false;
+                clangCmd.bPrintModuleScope = false;
+                clangCmd.bSaveTemps = false;
+                const { stdout, stderr } = await cmd.run();
+                this.ast = stdout;
+            }
         }
 
         let input = this.command.getInputPath();
