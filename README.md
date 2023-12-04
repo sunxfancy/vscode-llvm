@@ -1,4 +1,5 @@
 # VSCode LLVM Compiler Explorer
+Download from [VSCode marketplace](https://marketplace.visualstudio.com/items?itemName=XiaofanSun.vscode-llvm).
 
 This is a tool for compiler developers of LLVM. This vscode extension can support exploring LLVM IR and machine IR after each pass. 
 
