@@ -36,6 +36,18 @@ Inspired by Compiler Explorer, this extension can highlight the mapping between 
 
 ![](./doc/highlight.png)
 
+
+## Run Print Pass to View CallGraph/CFG/DOMTree
+
+There is a list of utility passes available in this plugin. You can run these passes to view the CallGraph, CFG, and DOMTree of an IR file.
+
+When you open an IR file, you can click the 'Print Call Graph' button to generate a callgraph.dot file. Then, you can use the Graphviz plugin to view the callgraph.
+
+Note: You need to have 'opt' tool in your PATH (or specify the path in settings) and installed [Graphviz preview plugin](https://marketplace.visualstudio.com/items?itemName=tintinweb.graphviz-interactive-preview).
+
+![](./doc/callgraph.png)
+
+
 ## Syntax Highlighting
 
 This plugin provides syntax highlighting for Clang AST and assembly language. You may need to install additional LLVM syntax highlighting plugins, there are some options:
