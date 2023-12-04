@@ -145,12 +145,19 @@ export class PipelineNode {
 		if (!this.getParent() && this.label != 'output') { cmd = void 0; }
 		else {
 			if (this.label === 'output') {
-				cmd = {
-					// command: 'llvmPipelineView.openOutput',
-					// Now, we use AsmView instead the old output view.
-					command: 'llvmAsmView.openOutput',
-					title: 'Open Output'
-				};
+				if (core.active?.isCompare() == false) {
+					cmd = {
+						// command: 'llvmPipelineView.openOutput',
+						// Now, we use AsmView instead the old output view.
+						command: 'llvmAsmView.openOutput',
+						title: 'Open Output'
+					};
+				} else {
+					cmd = {
+						command: 'llvmPipelineView.openOutput',
+						title: 'Open Output'
+					};
+				}
 			} else if (this.pass) {
 				if (this.pass2 === undefined) {
 					cmd = {

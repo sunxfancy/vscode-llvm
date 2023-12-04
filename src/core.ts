@@ -72,16 +72,18 @@ export class Pipeline {
     }
 
     public parseLLVMDump(data: string) {
-        const re = /^(# )?\*\*\* (.+) \*\*\*\:?$/m;
+        const re = /^(# )?\*\*\* (.+) \*\*\*\s*(\(function\: ([^\)]+)\))?\:?\s*$/m;
         let pass = data.split(re);
 
-        for (let i = 1; i < pass.length; i += 6) {
+        for (let i = 1; i < pass.length; i += 10) {
             let sharp = pass[i];
             let name = pass[i + 1];
-            let ir = pass[i + 2];
-            let sharp2 = pass[i + 3];
-            let name2 = pass[i + 4];
-            let ir2 = pass[i + 5];
+            let func_name = pass[i + 3];
+            let ir = pass[i + 4];
+            let sharp2 = pass[i + 5];
+            let name2 = pass[i + 6];
+            let func_name2 = pass[i + 8];
+            let ir2 = pass[i + 9];
 
             if (name.substring(15) !== name2.substring(14)) {
                 console.log("name mismatch: " + name + " " + name2);

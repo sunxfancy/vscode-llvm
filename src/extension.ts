@@ -5,11 +5,12 @@ import * as path from 'path';
 import { ConfigViewProvider } from './control-panel';
 import { LLVMPipelineTreeDataProvider, LLVMPipelineTreeItemDecorationProvider } from './pipeline-panel';
 import { LLVMAvailablePassDataProvider } from './available-panel';
-import { Core, Pass, PipelineContentProvider } from './core';
+import { ComparedPipeline, Core, Pass, PipelineContentProvider } from './core';
 import { Debug } from './debug';
 import { checkFileExists, ensurePropertiesFile } from './config';
 import { Command } from './clang';
 import { AsmDecorator } from './decorator';
+import { get } from 'http';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -114,12 +115,32 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	function registerCommandForUri(cmd: string, component: string) {
+		function getLanguage(component: string) {
+			if (component == "output") return "vscode-llvm.disassembly";
+			if (component == "preprocessed") return "cpp";
+			if (component == "llvm") return "llvm";
+			return "plaintext";
+		}
+
 		let command = vscode.commands.registerCommand(cmd, async () => {
-			let raw = core.active?.raw_command;
-			if (!raw) return;
-			let uri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/${component}`);
-			let doc = await vscode.workspace.openTextDocument(uri);
-			vscode.window.showTextDocument(doc, { preserveFocus: true, preview: true });
+			if (core.active?.isCompare() == false) {
+				let raw = core.active?.raw_command;
+				if (!raw) return;
+				let uri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/${component}`);
+				let doc = await vscode.workspace.openTextDocument(uri);
+				vscode.window.showTextDocument(doc, { preserveFocus: true, preview: true });
+			} else {
+				let cpipe = core.active as ComparedPipeline;
+				let raw1 = cpipe.linked_pipeline?.raw_command;
+				let raw2 = cpipe.linked_pipeline2?.raw_command;
+				if (!raw1 || !raw2) return;
+				let doc1 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw1)}/${component}`));
+				let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw2)}/${component}`));
+				vscode.languages.setTextDocumentLanguage(doc1, getLanguage(component));
+				vscode.languages.setTextDocumentLanguage(doc2, getLanguage(component));
+
+				vscode.commands.executeCommand("vscode.diff", doc1.uri, doc2.uri);
+			}
 		});
 		context.subscriptions.push(command);
 	}
