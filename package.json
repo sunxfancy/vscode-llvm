@@ -22,31 +22,31 @@
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
-			{
-				"id": "vscode-llvm.disassembly",
-				"aliases": [
-					"Disassembly"
-				]
-			},
       {
-				"id": "vscode-llvm.llvm-ast",
-				"aliases": [
-					"LLVM AST"
-				]
-			}
-		],
-		"grammars": [
-			{
-				"language": "vscode-llvm.disassembly",
-				"scopeName": "source.disassembly",
-				"path": "./resources/disassembly.json"
+        "id": "vscode-llvm.disassembly",
+        "aliases": [
+          "Disassembly"
+        ]
       },
       {
-				"language": "vscode-llvm.llvm-ast",
-				"scopeName": "source.llvm-ast",
-				"path": "./resources/llvm-ast.json"
-			}
-		],
+        "id": "vscode-llvm.llvm-ast",
+        "aliases": [
+          "LLVM AST"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vscode-llvm.disassembly",
+        "scopeName": "source.disassembly",
+        "path": "./resources/disassembly.json"
+      },
+      {
+        "language": "vscode-llvm.llvm-ast",
+        "scopeName": "source.llvm-ast",
+        "path": "./resources/llvm-ast.json"
+      }
+    ],
     "commands": [
       {
         "command": "llvmPipelineView.settings",
@@ -165,7 +165,7 @@
     "mocha": "^10.0.0",
     "ts-loader": "^9.3.1",
     "typescript": "^4.7.4",
-    "webpack": "^5.74.0",
+    "webpack": "^5.89.0",
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
