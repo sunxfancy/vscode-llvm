@@ -52,6 +52,6 @@ Note: You need to have 'opt' tool in your PATH (or specify the path in settings)
 
 This plugin provides syntax highlighting for Clang AST and assembly language. You may need to install additional LLVM syntax highlighting plugins, there are some options:
 
-[RReverser.llvm](https://marketplace.visualstudio.com/items?itemName=RReverser.llvm)
-[colejcummins.llvm-syntax-highlighting](https://marketplace.visualstudio.com/items?itemName=colejcummins.llvm-syntax-highlighting)
+- [RReverser.llvm](https://marketplace.visualstudio.com/items?itemName=RReverser.llvm)
+- [colejcummins.llvm-syntax-highlighting](https://marketplace.visualstudio.com/items?itemName=colejcummins.llvm-syntax-highlighting)
 
