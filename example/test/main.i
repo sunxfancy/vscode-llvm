@@ -4286,6 +4286,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
 # 2 "test/main.c" 2
 
 int main(int argc, char *argv[]) {
-    printf("Hello, world!\n");
+    printf("Hello\n");
+    printf("World\n");
     return 0;
 }

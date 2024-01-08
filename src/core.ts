@@ -38,9 +38,23 @@ export class Pipeline {
         this.command = cmd;
     }
 
+    public encodeCommand() {
+        return encodeURIComponent(this.raw_command.replace(/\//g, "%2F"));
+    }
+
     public async run() {
         const { stdout, stderr } = await this.command.run();
-        this.output = stdout;
+        
+        // First, get the output ASM from the command
+        // if the command has specified an output file, read that
+        // otherwise, read the stdout
+        let output_path = this.command.getOutputPath();
+        if (output_path == '-' || output_path == undefined)
+            this.output = stdout;
+        else 
+            this.output = readFileSync(output_path).toString();
+
+        // Then, we should parse the LLVM dump data in stderr
         this.parseLLVMDump(stderr);
 
         // Get the human-readable LLVM IR 
@@ -88,7 +102,7 @@ export class Pipeline {
         let path = input?.substring(0, index);
         if (!path) { return; }
         this.preprocessed = readFileSync(path + ".i").toString();
-        this.llvm = readFileSync(path + ".ll").toString();
+        // this.llvm = readFileSync(path + ".ll").toString();
     }
 
     public parseLLVMDump(data: string) {

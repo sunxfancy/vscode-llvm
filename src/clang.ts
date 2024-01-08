@@ -233,7 +233,7 @@ export class ClangCommand extends Command {
         }
 
         if (this.bSaveTemps && args.indexOf('-save-temps') === -1) {
-            args = args.concat(["-save-temps"]);
+                    args = args.concat(["-save-temps=obj"]);
         }
 
         if (this.sFilter) {
@@ -252,10 +252,13 @@ export class ClangCommand extends Command {
             args = args.concat(["-mllvm", "-print-after-all"]);
         }
 
-        if (this.bOutputToStdout || this.output === undefined)
+        if (this.bOutputToStdout)
             args = args.concat(["-o", "-"]);
-        else
+        else {
+            if (this.output === undefined) 
+                this.output = this.input[0] + ".s";
             args = args.concat(["-o", this.output]);
+        }
 
         if (this.bInputFromStdin == false && this.input.length > 0) {
             args = args.concat(this.input);
@@ -270,6 +273,7 @@ export class ClangCommand extends Command {
         }
     }
     public getOutputPath(): string | undefined {
+        if (this.bOutputToStdout) return '-';
         return this.output;
     }
 
@@ -291,7 +295,7 @@ export class ClangCommand extends Command {
     // Here is a list of configurable options
     public bInputFromStdin = false;
     public bSaveTemps = true;
-    public bOutputToStdout = true;
+    public bOutputToStdout = false;
     public bDisableOptnone = true;
     public bDebug = true;
     public sFilter?: string;

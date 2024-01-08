@@ -11,7 +11,8 @@
 			"request": "launch",
 			"args": [
 				// "--disable-extensions",
-				"--extensionDevelopmentPath=${workspaceFolder}"
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"${workspaceFolder}/example"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"

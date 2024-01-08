@@ -61,9 +61,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerCommand('llvmPipelineView.open', async (pass: Pass) => {
 		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(
-			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/before${pass.backend ? "-b" : ""}/${pass.index}`));
+			`vscode-llvm:/${pass.parent.encodeCommand()}/before${pass.backend ? "-b" : ""}/${pass.index}`));
 		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(
-			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
+			`vscode-llvm:/${pass.parent.encodeCommand()}/after${pass.backend ? "-b" : ""}/${pass.index}`));
 		vscode.languages.setTextDocumentLanguage(doc, 'llvm');
 		vscode.languages.setTextDocumentLanguage(doc2, 'llvm');
 		console.log("openPipelineView vscode.diff");
@@ -72,9 +72,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerCommand('llvmPipelineView.openCompare', async (pass: Pass, pass2: Pass) => {
 		let doc = await vscode.workspace.openTextDocument(vscode.Uri.parse(
-			`vscode-llvm:/${encodeURIComponent(pass.parent.raw_command)}/after${pass.backend ? "-b" : ""}/${pass.index}`));
+			`vscode-llvm:/${pass.parent.encodeCommand()}/after${pass.backend ? "-b" : ""}/${pass.index}`));
 		let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(
-			`vscode-llvm:/${encodeURIComponent(pass2.parent.raw_command)}/after${pass2.backend ? "-b" : ""}/${pass2.index}`));
+			`vscode-llvm:/${pass2.parent.encodeCommand()}/after${pass2.backend ? "-b" : ""}/${pass2.index}`));
 		vscode.languages.setTextDocumentLanguage(doc, 'llvm');
 		vscode.languages.setTextDocumentLanguage(doc2, 'llvm');
 		console.log("openPipelineView vscode.diff");
@@ -127,7 +127,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (core.active?.isCompare() == false) {
 				let raw = core.active?.raw_command;
 				if (!raw) return;
-				let uri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/${component}`);
+				let uri = vscode.Uri.parse(`vscode-llvm:/${core.active?.encodeCommand()}/${component}`);
 				let doc = await vscode.workspace.openTextDocument(uri);
 				vscode.languages.setTextDocumentLanguage(doc, getLanguage(component));
 				vscode.window.showTextDocument(doc, { preserveFocus: true, preview: true });
@@ -136,8 +136,8 @@ export async function activate(context: vscode.ExtensionContext) {
 				let raw1 = cpipe.linked_pipeline?.raw_command;
 				let raw2 = cpipe.linked_pipeline2?.raw_command;
 				if (!raw1 || !raw2) return;
-				let doc1 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw1)}/${component}`));
-				let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw2)}/${component}`));
+				let doc1 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${cpipe.linked_pipeline?.encodeCommand()}/${component}`));
+				let doc2 = await vscode.workspace.openTextDocument(vscode.Uri.parse(`vscode-llvm:/${cpipe.linked_pipeline2?.encodeCommand()}/${component}`));
 				vscode.languages.setTextDocumentLanguage(doc1, getLanguage(component));
 				vscode.languages.setTextDocumentLanguage(doc2, getLanguage(component));
 
@@ -214,7 +214,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		let srcDoc  = await vscode.workspace.openTextDocument(input);
 		let srcEditor  = await vscode.window.showTextDocument(srcDoc, { preserveFocus: true, preview: true });
 		
-		const asmUri = vscode.Uri.parse(`vscode-llvm:/${encodeURIComponent(raw)}/output`);
+		const asmUri = vscode.Uri.parse(`vscode-llvm:/${core.active?.encodeCommand()}/output`);
 
 		const options = {
 			viewColumn: srcEditor.viewColumn! + 1,

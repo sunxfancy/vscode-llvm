@@ -209,7 +209,7 @@ export class PipelineNode {
 
 			// TODO: change this uri for the different in common node.
 			resourceUri: this.pass ? vscode.Uri.parse(
-				`vscode-llvm:/${encodeURIComponent(this.pass.parent.raw_command)}/`+
+				`vscode-llvm:/${this.pass.parent.encodeCommand()}/`+
 				`before${this.pass.backend ? "-b" : ""}/${this.pass.index}`) : undefined
 		};
 	}
