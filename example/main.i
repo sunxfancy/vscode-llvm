@@ -1,10 +1,10 @@
-# 1 "test/main.c"
+# 1 "main.c"
 # 1 "<built-in>" 1
 # 1 "<built-in>" 3
 # 358 "<built-in>" 3
 # 1 "<command line>" 1
 # 1 "<built-in>" 2
-# 1 "test/main.c" 2
+# 1 "main.c" 2
 # 1 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\ucrt\\stdio.h" 1 3
 # 12 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\ucrt\\stdio.h" 3
 # 1 "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.22621.0\\ucrt\\corecrt.h" 1 3
@@ -4283,7 +4283,7 @@ __declspec(deprecated("This function or variable may be unsafe. Consider using "
 #pragma pack(pop)
 #pragma clang diagnostic pop
 #pragma warning(pop)
-# 2 "test/main.c" 2
+# 2 "main.c" 2
 
 int main(int argc, char *argv[]) {
     printf("Hello, world!\n");

@@ -21,7 +21,7 @@ export class Command {
     // This function create a command and automatically detect the type
     public static async create(commands: string[]): Promise<Command | undefined> {
         if (commands.length === 0) { return undefined; }
-        let clangNames = RegExp("(clang|clang\\+\\+|clang-cl|clang-cpp)(-[0-9]+(\\.[0-9]+)?)?(\.exe)?$");
+        let clangNames = RegExp("(clang|clang\\+\\+|clang-cpp)(-[0-9]+(\\.[0-9]+)?)?(\.exe)?$");
         let lldNames = RegExp("(ld.lld|ld64.lld|lld|lld-link)(\.exe)?$");
         let nvccNames = RegExp("(nvcc)(\.exe)?$");
 
@@ -188,8 +188,9 @@ export class ClangCommand extends Command {
         super(commands);
         this.output = output;
         this.input = input;
-
+        
         if (mode) { this.mode = mode; }
+        if (output != undefined) this.bOutputToStdout = false;
     }
 
     public async getRealCommands() {
@@ -295,7 +296,7 @@ export class ClangCommand extends Command {
     // Here is a list of configurable options
     public bInputFromStdin = false;
     public bSaveTemps = true;
-    public bOutputToStdout = false;
+    public bOutputToStdout = true;
     public bDisableOptnone = true;
     public bDebug = true;
     public sFilter?: string;
@@ -308,6 +309,34 @@ export class ClangCommand extends Command {
 
 // TODO: LLDCommand and NVCCCommand
 export class LLDCommand extends Command {
+    public input: string[];
+    public output?: string;
+
+    constructor(commands: string[]) {
+        // get output file
+        let outputIdx = commands.indexOf("-o");
+        let output = undefined;
+        if (outputIdx !== -1) {
+            output = commands[outputIdx + 1];
+            commands.splice(outputIdx, 2);
+        }
+
+        // get input files
+        let input: string[] = [];
+        let obj = RegExp("\\.(o)$");
+        for (let i = 0; i < commands.length; i++) {
+            if (obj.test(commands[i])) {
+                input.push(commands[i]);
+                commands[i] = "";
+            }
+        }
+        commands = commands.filter((value) => { return value !== ""; });
+
+        super(commands);
+        this.output = output;
+        this.input = input;
+    }
+
     public getType(): string {
         return "LLDCommand";
     }
