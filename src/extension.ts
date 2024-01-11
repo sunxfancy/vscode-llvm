@@ -176,7 +176,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const optPath = vscode.workspace.getConfiguration('vscode-llvm')
             .get('optPath', 'opt');
 
-		let cmd = await Command.createfromString(optPath + ' -S ' + pass + ' -o -');
+		let cmd = await Command.createFromString(optPath + ' -S ' + pass + ' -o -');
 		if (cmd == undefined) return;
 		const { stdout, stderr } = await cmd.run(undefined, editor?.document.getText());
 		if (stdout && stdout.length > 0) {

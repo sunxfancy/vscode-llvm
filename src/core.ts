@@ -67,7 +67,7 @@ export class Pipeline {
                         this.preprocessed = readFileSync(output).toString();
                     }
                     if (cmd.mode == "-emit-llvm-bc" && output) {
-                        let convertCmd = await Command.createfromString(
+                        let convertCmd = await Command.createFromString(
                             'clang -S -emit-llvm "' + output + '" -o -');
                         if (convertCmd) {
                             const { stdout, stderr } = await convertCmd.run();
@@ -81,7 +81,7 @@ export class Pipeline {
         // Get the AST
         if (this.command instanceof ClangCommand) {
             let c = this.command as ClangCommand;
-            let cmd = await Command.createfromString(
+            let cmd = await Command.createFromString(
                 "clang -fsyntax-only " + c.args.join(" ") + " " + c.input.join(" "));
             if (cmd) {
                 let clangCmd = cmd as ClangCommand;
@@ -171,7 +171,7 @@ export class Core {
     }
 
     public async runPipeline(cmd: string, cenv?: CommandEnv) {
-        let command = await Command.createfromString(cmd);
+        let command = await Command.createFromString(cmd);
         if (!command) { return; }
         if (cenv) { command.env = cenv; }
         if (this.filter != "") { command.setFilter(this.filter); }
@@ -203,7 +203,7 @@ export class Core {
 
         await this.ensurePipeline(cmd1, cenv);
         await this.ensurePipeline(cmd2, cenv);
-        let command = await Command.createfromString("compare");
+        let command = await Command.createFromString("compare");
         if (!command) { return; }
 
         let pipeline = new ComparedPipeline(cmd, command,
