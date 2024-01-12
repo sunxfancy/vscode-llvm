@@ -443,7 +443,57 @@ export class GCCCommand extends Command {
 }
 
 export class CICCCommand extends Command {
+    public input?: string;
+    public output?: string;
 
+    public orig_src_path_name?: string;
+    public include_file_name?: string;
+    public module_id_file_name?: string;
+    public gen_c_file_name?: string;
+    public stub_file_name?: string;
+    public gen_device_file_name?: string;
+
+    constructor(commands: string[]) {
+        let orig_src_path_name = commands[commands.indexOf("--orig_src_path_name") + 1];
+        let include_file_name = commands[commands.indexOf("--include_file_name") + 1];
+        let module_id_file_name = commands[commands.indexOf("--module_id_file_name") + 1];
+        let gen_c_file_name = commands[commands.indexOf("--gen_c_file_name") + 1];
+        let stub_file_name = commands[commands.indexOf("--stub_file_name") + 1];
+        let gen_device_file_name = commands[commands.indexOf("--gen_device_file_name") + 1];
+
+        commands.splice(commands.indexOf("--orig_src_path_name"), 2);
+        commands.splice(commands.indexOf("--include_file_name"), 2);
+        commands.splice(commands.indexOf("--module_id_file_name"), 2);
+        commands.splice(commands.indexOf("--gen_c_file_name"), 2);
+        commands.splice(commands.indexOf("--stub_file_name"), 2);
+        commands.splice(commands.indexOf("--gen_device_file_name"), 2);
+
+        // get input file
+        let ii = RegExp("\\.cpp1.ii$");
+        let idx = commands.findIndex(value => ii.test(value));
+        let input = undefined;
+        if (idx === -1) {
+            input = commands[idx];
+            commands.splice(idx, 1);
+        }
+
+        // get output file
+        let outputIdx = commands.indexOf("-o");
+        let output = undefined;
+        if (outputIdx !== -1) {
+            output = commands[outputIdx + 1];
+            commands.splice(outputIdx, 2);
+        }
+
+        super(commands);
+        this.input = input;
+        this.orig_src_path_name = orig_src_path_name;
+        this.include_file_name = include_file_name;
+        this.module_id_file_name = module_id_file_name;
+        this.gen_c_file_name = gen_c_file_name;
+        this.stub_file_name = stub_file_name;
+        this.gen_device_file_name = gen_device_file_name;
+    }
 }
 
 export class PTXASCommand extends Command {
@@ -506,15 +556,64 @@ export class CUDAFECommand extends Command {
 }
 
 export class NVLinkCommand extends Command {
+    
+
 }
 
 export class FatbinaryCommand extends Command {
+    public input: string[];
+    public output?: string;
+
+    constructor(commands: string[]) {
+
+        // get output file
+        let out = RegExp("^--embedded-fatbin=(.*)$");
+        let idx = commands.findIndex(value => out.test(value));
+        let output = undefined;
+        if (idx !== -1) {
+            output = commands[idx].substring(19);
+            commands.splice(idx, 1);
+        }
+        
+        // get input files
+        let input: string[] = [];
+        let obj = RegExp("\\.(cubin|ptx)$");
+        for (let i = 0; i < commands.length; i++) {
+            if (obj.test(commands[i])) {
+                input.push(commands[i]);
+                commands[i] = "";
+            }
+        }
+        commands = commands.filter(value => value !== "");
+
+        super(commands);
+        this.input = input;
+        this.output = output;
+    }
+
 }
 
 export class EraseCommand extends Command {
+    public path?: string;
+
 }
 
 export class ResourceCommand extends Command {
+    public file: string;
+
+    constructor(commands: string[]) {
+        let path = commands[commands.indexOf('file')+1];
+        path = path.substring(0, path.length-1);
+        commands.splice(commands.indexOf('file'), 2);
+
+        // remove the []
+        commands[1] = commands[1].substring(1);
+        let last = commands[commands.length-1];
+        commands[commands.length-1] = last.substring(0, last.length-1);
+
+        super(commands);
+        this.file = path;
+    }
 }
 
 export class NVCCCommand extends Command {
