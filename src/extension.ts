@@ -5,7 +5,7 @@ import * as path from 'path';
 import { ConfigViewProvider } from './control-panel';
 import { LLVMPipelineTreeDataProvider, LLVMPipelineTreeItemDecorationProvider } from './pipeline-panel';
 import { LLVMAvailablePassDataProvider } from './available-panel';
-import { ComparedPipeline, Core, Pass, PipelineContentProvider } from './core';
+import { ComparedPipeline, Core, DocumentWatcher, Pass, PipelineContentProvider } from './core';
 import { Debug } from './debug';
 import { checkFileExists, ensurePropertiesFile } from './config';
 import { Command } from './clang';
@@ -38,6 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	let contentProvider = new PipelineContentProvider(core, context.subscriptions);
 	new LLVMPipelineTreeItemDecorationProvider(core, context.subscriptions);
 	new LLVMAvailablePassDataProvider(context.subscriptions);
+	new DocumentWatcher(core, context.subscriptions);
 
 	registerCommand('vscode-llvm.reloadConfig', () => {
 		provider.reloadConfig();

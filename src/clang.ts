@@ -596,6 +596,12 @@ export class FatbinaryCommand extends Command {
 export class EraseCommand extends Command {
     public path?: string;
 
+    constructor(commands: string[]) {
+        super(commands);
+        if (commands.length > 1) {
+            this.path = commands[1];
+        }
+    }
 }
 
 export class ResourceCommand extends Command {
@@ -650,7 +656,6 @@ export class NVCCCommand extends Command {
         }
         return results;
     }
-
     
 }
 

@@ -4,6 +4,8 @@ import { LLVMPipelineTreeDataProvider } from './pipeline-panel';
 import { splitURI } from './utils';
 import { AsmDocument } from './document';
 import * as vscode from 'vscode';
+import { on } from 'events';
+import * as path from 'path';
 
 export class Pass {
     public same: boolean;
@@ -155,8 +157,84 @@ export class ComparedPipeline extends Pipeline {
     }
 }
 
-export class Core {
+export class FileWatcher {
+    public path: string;
+    public watcher: vscode.FileSystemWatcher;
+    public dependentDocuments: vscode.TextDocument[] = [];
 
+    constructor(private core: Core, path: string) {
+        this.path = path;
+        this.watcher = vscode.workspace.createFileSystemWatcher(path, false, false, true);
+        this.watcher.onDidChange(this.onDidChange, this);
+        this.watcher.onDidCreate(this.onDidChange, this);
+    }
+    
+    onDidChange() {
+        console.log("onDidChange", this.path);
+        this.dependentDocuments.forEach(doc => {
+            let { pipeline, catergory, index } = splitURI(doc.uri);
+            this.core.runWithProgress(this.core.get(pipeline) as Pipeline);
+        });
+    }
+}
+
+export class DocumentWatcher {
+    private inputFiles = new Map<string, FileWatcher>();
+    private openURIs : vscode.Uri[] = [];
+
+    constructor(private core: Core, subscriptions: vscode.Disposable[]) {
+        core.watcher = this;
+        subscriptions.push(vscode.workspace.onDidOpenTextDocument(
+            this.onDidOpenTextDocument, this));
+        subscriptions.push(vscode.workspace.onDidCloseTextDocument(
+            this.onDidCloseTextDocument, this));
+    }
+
+    onDidOpenTextDocument(doc: vscode.TextDocument) {
+        if (doc.uri.scheme !== 'vscode-llvm') return;
+        this.openURIs.push(doc.uri);
+
+        let { pipeline, catergory, index } = splitURI(doc.uri);
+        if (pipeline) {
+            let file = this.core.get(pipeline)?.command.getInputPath() as string;
+            file = path.resolve(file);
+            if (this.inputFiles.has(file)) {
+                this.inputFiles.get(file)?.dependentDocuments.push(doc);
+            } else {
+                console.log("create new watcher for " + file);
+                let watcher = new FileWatcher(this.core, file);
+                watcher.dependentDocuments.push(doc);
+                this.inputFiles.set(file, watcher);
+            }
+        }
+    }
+
+    onDidCloseTextDocument(doc: vscode.TextDocument) {
+        if (doc.uri.scheme !== 'vscode-llvm') return;
+        let d = this.openURIs.indexOf(doc.uri);
+        if (d >= 0) { this.openURIs.splice(d, 1); }
+
+        let { pipeline, catergory, index } = splitURI(doc.uri);
+        if (pipeline) {
+            let file = this.core.get(pipeline)?.command.getInputPath() as string;
+            file = path.resolve(file);
+            let watcher = this.inputFiles.get(file);
+            if (!watcher) { return; }
+            let index = watcher.dependentDocuments.indexOf(doc);
+            if (index >= 0) {
+                watcher.dependentDocuments.splice(index, 1);
+                if (watcher.dependentDocuments.length === 0) {
+                    watcher.watcher.dispose();
+                    this.inputFiles.delete(file);
+                }
+            }
+        }
+    }
+
+}
+
+export class Core {
+    public watcher?: DocumentWatcher;
     private pipelines: Map<string, Pipeline> = new Map();
     public active?: Pipeline;
     private provider?: LLVMPipelineTreeDataProvider;
@@ -178,7 +256,7 @@ export class Core {
         let pipeline = new Pipeline(cmd, command);
         this.pipelines.set(cmd, pipeline);
         this.active = pipeline;
-        await this.runWithProgress();
+        await this.runWithProgress(this.active);
         this.provider?.refresh();
     }
 
@@ -213,8 +291,7 @@ export class Core {
         this.provider?.refresh();
     }
 
-    public async runWithProgress() {
-        let pipeline = this.active;
+    public async runWithProgress(pipeline: Pipeline) {
         return vscode.window.withProgress({
             location: vscode.ProgressLocation.Window,
             cancellable: true,
