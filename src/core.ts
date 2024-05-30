@@ -57,7 +57,7 @@ export class Pipeline {
             this.output = readFileSync(output_path).toString();
 
         // Then, we should parse the LLVM dump data in stderr
-        this.parseLLVMDump(stderr);
+        this.parseLLVMDumpChanged(stderr);
 
         // Get the human-readable LLVM IR 
         if (this.command instanceof ClangCommand) {
@@ -141,6 +141,29 @@ export class Pipeline {
         }
     }
 
+    public parseLLVMDumpChanged(data: string) {
+        const re = /^(# )?\*\*\* (.+) \*\*\*\s*(\(function\: ([^\)]+)\))?\:?\s*$/m;
+        const isMachineCode = /^# Machine code for function (.+)$/m;
+        let pass = data.split(re);
+        let last_ir = "";
+        for (let i = 1; i < pass.length; i += 5) {
+            let sharp = pass[i];
+            let name = pass[i + 1];
+            let func_name = pass[i + 3];
+            let ir = pass[i + 4].trim();
+            if (ir == '') ir = last_ir;
+
+            if (!isMachineCode.test(ir)) {
+                this.passList.push(new Pass(
+                    this, name, last_ir, ir, this.passList.length, false));
+            } else {
+                this.backendList.push(new Pass(
+                    this, name, last_ir, ir, this.backendList.length, true));
+            }
+            
+            last_ir = ir;
+        }
+    }
     public isCompare() {
         return false;
     }

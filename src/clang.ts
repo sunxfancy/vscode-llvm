@@ -283,6 +283,10 @@ export class ClangCommand extends Command {
             args = args.concat(["-mllvm", "-print-after-all"]);
         }
 
+        if (this.bPrintChanged && args.indexOf('-print-changed') === -1) {
+            args = args.concat(["-mllvm", "-print-changed"]);
+        }
+
         if (this.bOutputToStdout)
             args = args.concat(["-o", "-"]);
         else {
@@ -335,8 +339,9 @@ export class ClangCommand extends Command {
     public bDebug = true;
     public sFilter?: string;
     public bPrintModuleScope = true;
-    public bPrintBefore = true;
-    public bPrintAfter = true;
+    public bPrintBefore = false;
+    public bPrintAfter = false;
+    public bPrintChanged = true;
     public bDumpAST = false;
     public mode?: string;
 }
