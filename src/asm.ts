@@ -548,6 +548,7 @@ export class AsmParser {
                 // It's a label definition.
                 if (!labelsUsed.has(match[1])) {
                     // It's an unused label.
+                    prevLabel = undefined;
                     if (filter.labels) {
                         continue;
                     }
