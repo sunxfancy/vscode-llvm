@@ -42,13 +42,13 @@ export class Command {
 
             // for clang command, we need to get the real command by running with '-###'
             let clangCmd = new ClangCommand(commands);
-            clangCmd.addSubCommands(await clangCmd.getRealCommands());
+            await clangCmd.addSubCommands(await clangCmd.getRealCommands());
             return clangCmd;
         } else if (lldNames.test(commands[0])) {
             return new LLDCommand(commands);
         } else if (nvccNames.test(commands[0])) {
             let nvccCmd = new NVCCCommand(commands);
-            nvccCmd.addSubCommands(await nvccCmd.getRealCommands());
+            await nvccCmd.addSubCommands(await nvccCmd.getRealCommands());
             return nvccCmd;
         } else if (gccNames.test(commands[0])) {
             return new GCCCommand(commands);
@@ -247,7 +247,7 @@ export class ClangCommand extends Command {
     public getArgs(): string[] {
         let args = this.args;
 
-        if (args.indexOf("-S") === -1) {
+        if (!['-S', '-E', '-fsyntax-only'].some(mode => args.includes(mode))) {
             args = args.concat(["-S"]);
         }
 
@@ -702,10 +702,8 @@ export class CommandEnv {
             run.on('error', (err) => {
                 reject(err);
             });
-            if (stdin) {
-                run.stdin.write(stdin);
-                run.stdin.end();
-            }
+            run.stdin.on('error', () => { /* The compiler may exit before reading stdin. */ });
+            run.stdin.end(stdin);
         });
     }
 
@@ -717,6 +715,6 @@ export class CommandEnv {
         return CommandEnv.defaultEnv;
     }
 
-    private workdir?: string;
+    public workdir?: string;
     private env?: NodeJS.ProcessEnv;
 }
