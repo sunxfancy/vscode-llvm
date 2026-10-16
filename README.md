@@ -55,3 +55,31 @@ This plugin provides syntax highlighting for Clang AST and assembly language. Yo
 - [RReverser.llvm](https://marketplace.visualstudio.com/items?itemName=RReverser.llvm)
 - [colejcummins.llvm-syntax-highlighting](https://marketplace.visualstudio.com/items?itemName=colejcummins.llvm-syntax-highlighting)
 
+
+## Live updates
+
+After running a pipeline, keep an assembly, AST, LLVM IR, preprocessed source,
+or pass comparison editor visible next to the input. Editing the input refreshes
+visible results after a 300 ms pause, including changes that have not been saved.
+Clang reads the editor buffer through a temporary VFS overlay, preserving the
+original source path and relative includes without writing the source file.
+
+Live refreshes run in the background and serialize work per pipeline. Results
+from an older edit are discarded. A compilation error leaves the last successful
+result visible; editing valid code triggers another refresh. Hidden result views
+are deferred until shown again. AST, preprocessing, and LLVM IR commands run only
+for visible views; full pass dumps are requested only for visible pass comparisons.
+The explicit Run command still builds the complete pipeline and pass list.
+
+Unsaved-buffer compilation currently supports Clang driver commands. Other
+command types refresh from disk when their input path is available. Changes to
+included headers are not tracked automatically.
+
+Run the focused live-update regression tests with `npm run test:live` (Node 18+).
+
+To include the real compiler test, set `LLVM_TEST_CLANG` to an absolute Clang
+executable path before `npm run test:live`. Without it, that test is skipped.
+To run the focused VS Code integration test, set `LLVM_TEST_CLANG`,
+`LLVM_TEST_GLOB='**/live.test.js'`, and optionally `VSCODE_EXECUTABLE_PATH` to an
+existing VS Code executable, then run `npm run compile-tests && npm run runtest`.
+Linux extension-host tests require a display (for example Xvfb).

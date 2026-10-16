@@ -33,6 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	let core = new Core();
+	context.subscriptions.push(core.onUpdated);
 	const provider = new ConfigViewProvider(context.extensionUri, core, context.subscriptions);
 	new LLVMPipelineTreeDataProvider(core, context.subscriptions);
 	let contentProvider = new PipelineContentProvider(core, context.subscriptions);
