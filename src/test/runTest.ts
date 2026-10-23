@@ -13,9 +13,15 @@ async function main() {
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
 		// Download VS Code, unzip it and run the integration test
-		await runTests({ extensionDevelopmentPath, extensionTestsPath });
+		await runTests({
+            extensionDevelopmentPath,
+            extensionTestsPath,
+            version: process.env.VSCODE_TEST_VERSION || 'stable',
+            vscodeExecutablePath: process.env.VSCODE_EXECUTABLE_PATH,
+            launchArgs: ['--no-sandbox', '--disable-gpu', '--skip-welcome', '--skip-release-notes']
+        });
 	} catch (err) {
-		console.error('Failed to run tests');
+		console.error('Failed to run tests', err);
 		process.exit(1);
 	}
 }

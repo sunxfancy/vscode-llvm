@@ -1,36 +1,56 @@
 import * as assert from 'assert';
+import { promises as fs } from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import which = require('which');
+import { Command, ClangCommand, CommandEnv, CC1Command, NVCCCommand } from '../../clang';
 
-import { Command, ClangCommand, NVCCCommand } from '../../clang';
+suite('Compiler integration tests', function () {
+    this.timeout(20000);
+    const clangPath = process.env.LLVM_TEST_CLANG || 'clang++';
+    let directory: string;
+    let input: string;
 
-suite('Command Test Suite', () => {
-	console.log('Start all tests.');
-    var path = require('path');
-    let appRoot = path.resolve(__dirname);
-    console.log(appRoot);
-    process.chdir(path.join(appRoot, '..', '..', '..', 'example'));
+    setup(async () => {
+        directory = await fs.mkdtemp(path.join(os.tmpdir(), 'llvm-compiler-test-'));
+        input = path.join(directory, 'source with spaces.cpp');
+        await fs.writeFile(path.join(directory, 'local.h'), '#define ANSWER 42\n');
+        await fs.writeFile(input, '#include "local.h"\nint answer() { return ANSWER; }\n');
+    });
 
-	test('clang++ commands test', async () => {
-        let cmd = await Command.createFromString("clang++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -o a.exe main.cpp");
-        let clang_cmd = cmd as ClangCommand;
-        
-        assert.strictEqual(clang_cmd.getInputPath(), "main.cpp");
-        assert.strictEqual(clang_cmd.getOutputPath(), "a.exe");
+    teardown(async () => {
+        await fs.rm(directory, { recursive: true, force: true });
+    });
 
-        let pp = clang_cmd.subCommands[0];
-        assert.strictEqual(pp.getType(), "CC1Command");
-        assert.strictEqual(pp.getOutputPath(), "main.ii");
-        console.log(pp.toString());
+    test('parses real Clang preprocessing and IR stages', async () => {
+        const command = await Command.createFromString(`"${clangPath}" -std=c++17 -O1 -o "${path.join(directory, 'out.s')}" "${input}"`);
+        assert.ok(command instanceof ClangCommand);
+        const clang = command as ClangCommand;
+        assert.strictEqual(clang.getInputPath(), input);
+        assert.strictEqual(clang.getOutputPath(), path.join(directory, 'out.s'));
+        const stages = clang.subCommands.filter((stage): stage is CC1Command => stage instanceof CC1Command);
+        assert.ok(stages.some(stage => stage.mode === '-E'), 'missing preprocessing stage');
+        assert.ok(stages.some(stage => stage.mode === '-emit-llvm-bc'), 'missing IR stage');
+    });
 
-	});
+    test('compiles C++ and a relative header to assembly', async () => {
+        const command = new ClangCommand([clangPath, '-std=c++17', '-O1', input]);
+        command.env = new CommandEnv(directory);
+        command.bSaveTemps = false;
+        command.bPrintChanged = false;
+        const result = await command.run();
+        assert.strictEqual(result.code, 0, result.stderr);
+        assert.match(result.stdout, /answer/);
+        assert.match(result.stdout, /42/);
+        assert.deepStrictEqual((await fs.readdir(directory)).sort(), ['local.h', 'source with spaces.cpp']);
+    });
 
-    test('nvcc commands test', async () => {
-        let cmd = await Command.createFromString("nvcc -std=c++17 -arch=sm_75 -o a.exe main.cu");
-        let nvcc_cmd = cmd as NVCCCommand;
-        
-        // assert.strictEqual(nvcc_cmd.getInputPath(), "main.cu");
-        // assert.strictEqual(nvcc_cmd.getOutputPath(), "a.exe");
-        assert.notStrictEqual(nvcc_cmd.subCommands.length, 0);
-        let pp = nvcc_cmd.subCommands[0];
-        console.log(pp.toString());
+    test('parses real NVCC stages when the CUDA toolkit is installed', async function () {
+        if (!which.sync('nvcc', { nothrow: true })) { this.skip(); }
+        const cuda = path.join(directory, 'input.cu');
+        await fs.writeFile(cuda, '__global__ void kernel() {}\n');
+        const command = await Command.createFromString(`nvcc -std=c++17 -arch=sm_75 -o "${path.join(directory, 'out')}" "${cuda}"`);
+        assert.ok(command instanceof NVCCCommand);
+        assert.ok((command as NVCCCommand).subCommands.length > 0);
     });
 });
