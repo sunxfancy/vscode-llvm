@@ -42,13 +42,13 @@ export class Command {
 
             // for clang command, we need to get the real command by running with '-###'
             let clangCmd = new ClangCommand(commands);
-            clangCmd.addSubCommands(await clangCmd.getRealCommands());
+            await clangCmd.addSubCommands(await clangCmd.getRealCommands());
             return clangCmd;
         } else if (lldNames.test(commands[0])) {
             return new LLDCommand(commands);
         } else if (nvccNames.test(commands[0])) {
             let nvccCmd = new NVCCCommand(commands);
-            nvccCmd.addSubCommands(await nvccCmd.getRealCommands());
+            await nvccCmd.addSubCommands(await nvccCmd.getRealCommands());
             return nvccCmd;
         } else if (gccNames.test(commands[0])) {
             return new GCCCommand(commands);
@@ -144,11 +144,16 @@ export class CC1Command extends Command {
     public mode?: string;
 
     constructor(commands: string[]) {
-        let language = commands[commands.indexOf("-x") + 1];
-        let input = commands[commands.indexOf("-x") + 2];
-        let output = commands[commands.indexOf("-o") + 1];
-        commands.splice(commands.indexOf("-x"), 3);
-        commands.splice(commands.indexOf("-o"), 2);
+        commands = [...commands];
+        const languageIdx = commands.indexOf('-x');
+        const language = languageIdx >= 0 ? commands[languageIdx + 1] : undefined;
+        if (languageIdx >= 0) { commands.splice(languageIdx, 2); }
+        const outputIdx = commands.indexOf('-o');
+        const output = outputIdx >= 0 ? commands[outputIdx + 1] : undefined;
+        if (outputIdx >= 0) { commands.splice(outputIdx, 2); }
+        // cc1 places its input last; -x selects the language, not its position.
+        const input = commands.length > 1 && !commands[commands.length - 1].startsWith('-')
+            ? commands.pop() : undefined;
         super(commands);
         this.input = input;
         this.output = output;
@@ -236,12 +241,8 @@ export class ClangCommand extends Command {
             return [];
         }
 
-        let lines = cmd.split(/\r?\n/);
-        let k = 4;
-        while (k < lines.length && !lines[k] && !lines[k].trim().startsWith("\"")) {
-            k++;
-        }
-        return lines.slice(k);
+        return cmd.split(/\r?\n/).map(line => line.trim())
+            .filter(line => line.startsWith('"'));
     }
 
     public getArgs(): string[] {
@@ -518,7 +519,7 @@ export class PTXASCommand extends Command {
         let ii = RegExp("\\.ptx$");
         let idx = commands.findIndex(value => ii.test(value));
         let input = undefined;
-        if (idx === -1) {
+        if (idx !== -1) {
             input = commands[idx];
             commands.splice(idx, 1);
         }
@@ -652,14 +653,9 @@ export class NVCCCommand extends Command {
             return [];
         }
 
-        let lines = cmd.split(/\r?\n/);
-        let k = 16;
-        let results = [];
-        while (k < lines.length && lines[k] && lines[k].startsWith("#$ ")) {
-            results.push(lines[k].substring(3).trim());
-            k++;
-        }
-        return results;
+        return cmd.split(/\r?\n/).filter(line => line.startsWith('#$ '))
+            .map(line => line.substring(3).trim())
+            .filter(line => line.length > 0 && !/^[A-Za-z_][A-Za-z0-9_]*=/.test(line));
     }
     
 }

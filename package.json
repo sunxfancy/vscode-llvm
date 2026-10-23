@@ -150,6 +150,7 @@
     "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
     "lint": "eslint src --ext ts",
     "test": "yarn run runtest",
+    "test:unit": "npm run compile-tests && mocha --ui tdd \"out/test/unit/**/*.test.js\"",
     "runtest": "node ./out/test/runTest.js"
   },
   "devDependencies": {

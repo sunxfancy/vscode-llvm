@@ -142,6 +142,8 @@ export class Pipeline {
     }
 
     public parseLLVMDumpChanged(data: string) {
+        this.passList = [];
+        this.backendList = [];
         const re = /^(# )?\*\*\* (.+) \*\*\*\s*(\(function\: ([^\)]+)\))?\:?\s*$/m;
         const isMachineCode = /^# Machine code for function (.+)$/m;
         let pass = data.split(re);
