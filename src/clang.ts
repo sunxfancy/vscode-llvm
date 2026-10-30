@@ -248,7 +248,7 @@ export class ClangCommand extends Command {
     public getArgs(): string[] {
         let args = this.args;
 
-        if (args.indexOf("-S") === -1) {
+        if (!['-S', '-E', '-fsyntax-only'].some(mode => args.includes(mode))) {
             args = args.concat(["-S"]);
         }
 
@@ -698,10 +698,8 @@ export class CommandEnv {
             run.on('error', (err) => {
                 reject(err);
             });
-            if (stdin) {
-                run.stdin.write(stdin);
-                run.stdin.end();
-            }
+            run.stdin.on('error', () => { /* The compiler may exit before reading stdin. */ });
+            run.stdin.end(stdin);
         });
     }
 
@@ -713,6 +711,6 @@ export class CommandEnv {
         return CommandEnv.defaultEnv;
     }
 
-    private workdir?: string;
+    public workdir?: string;
     private env?: NodeJS.ProcessEnv;
 }

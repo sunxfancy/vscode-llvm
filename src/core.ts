@@ -1,10 +1,11 @@
-import { readFileSync } from 'fs';
-import { CC1Command, ClangCommand, Command, CommandEnv } from './clang';
+import { promises as fs } from 'fs';
+import * as os from 'os';
+import { ClangCommand, Command, CommandEnv } from './clang';
 import { LLVMPipelineTreeDataProvider } from './pipeline-panel';
 import { splitURI } from './utils';
 import { AsmDocument } from './document';
+import { AsmWorkerClient, ParseCancelledError } from './asm-worker-client';
 import * as vscode from 'vscode';
-import { on } from 'events';
 import * as path from 'path';
 
 export class Pass {
@@ -44,67 +45,78 @@ export class Pipeline {
         return encodeURIComponent(this.raw_command.replace(/\//g, "%2F"));
     }
 
-    public async run() {
-        const { stdout, stderr } = await this.command.run();
-        
-        // First, get the output ASM from the command
-        // if the command has specified an output file, read that
-        // otherwise, read the stdout
-        let output_path = this.command.getOutputPath();
-        if (output_path == '-' || output_path == undefined)
-            this.output = stdout;
-        else 
-            this.output = readFileSync(output_path).toString();
-
-        // Then, we should parse the LLVM dump data in stderr
-        this.parseLLVMDumpChanged(stderr);
-
-        // Get the human-readable LLVM IR 
-        if (this.command instanceof ClangCommand) {
-            let c = this.command as ClangCommand;
-            c.subCommands.forEach(async (cmd) => {
-                if (cmd instanceof CC1Command) {
-                    let output = cmd.getOutputPath();
-                    if (cmd.mode == "-E" && output) {
-                        this.preprocessed = readFileSync(output).toString();
-                    }
-                    if (cmd.mode == "-emit-llvm-bc" && output) {
-                        let convertCmd = await Command.createFromString(
-                            'clang -S -emit-llvm "' + output + '" -o -');
-                        if (convertCmd) {
-                            const { stdout, stderr } = await convertCmd.run();
-                            this.llvm = stdout;
-                        }
-                    }
+    // Each refresh builds an isolated result; only the scheduler publishes it.
+    public async run(categories = new Set(['output', 'passes', 'ast', 'llvm', 'preprocessed']),
+        source?: string) {
+        const original = this.command;
+        let temporary: string | undefined;
+        let command = original;
+        try {
+            if (original instanceof ClangCommand) {
+                const clang = new ClangCommand([original.exe, ...original.args,
+                    ...original.input]);
+                Object.assign(clang, original);
+                clang.args = original.args.filter(arg => !['-S', '-c', '-E', '-emit-llvm'].includes(arg));
+                clang.env = original.env || CommandEnv.getDefault();
+                clang.bSaveTemps = false;
+                clang.bOutputToStdout = true;
+                clang.bPrintChanged = categories.has('passes');
+                clang.bPrintBefore = false;
+                clang.bPrintAfter = false;
+                command = clang;
+                if (source !== undefined && original.getInputPath()) {
+                    temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'vscode-llvm-'));
+                    const input = path.resolve(clang.env.workdir || process.cwd(), original.getInputPath()!);
+                    const contents = path.join(temporary, 'source');
+                    await fs.writeFile(contents, source);
+                    const overlay = path.join(temporary, 'overlay.json');
+                    await fs.writeFile(overlay, JSON.stringify({ version: 0,
+                        roots: [{ type: 'file', name: input, 'external-contents': contents,
+                            'use-external-name': false }] }));
+                    clang.args.push('-ivfsoverlay', overlay);
                 }
-            });
-        }
-
-        // Get the AST
-        if (this.command instanceof ClangCommand) {
-            let c = this.command as ClangCommand;
-            let cmd = await Command.createFromString(
-                "clang -fsyntax-only " + c.args.join(" ") + " " + c.input.join(" "));
-            if (cmd) {
-                let clangCmd = cmd as ClangCommand;
-                clangCmd.bDumpAST = true;
-                clangCmd.bDebug = false;
-                clangCmd.bDisableOptnone = false;
-                clangCmd.bPrintAfter = false;
-                clangCmd.bPrintBefore = false;
-                clangCmd.bPrintModuleScope = false;
-                clangCmd.bSaveTemps = false;
-                const { stdout, stderr } = await cmd.run();
-                this.ast = stdout;
             }
+            const execute = async (cmd: Command) => {
+                const result = await cmd.run();
+                if (result.code !== 0) throw new Error(result.stderr || 'Compiler command failed');
+                return result;
+            };
+            if (categories.has('output') || categories.has('passes') || !(command instanceof ClangCommand)) {
+                const { stdout, stderr } = await execute(command);
+                const output = command.getOutputPath();
+                this.output = !output || output === '-' ? stdout : await fs.readFile(output, 'utf8');
+                this.passList = [];
+                this.backendList = [];
+                if (categories.has('passes')) this.parseLLVMDumpChanged(stderr);
+            }
+            if (command instanceof ClangCommand) {
+                command.bPrintChanged = false;
+                command.bPrintModuleScope = false;
+                // Auxiliary views are compiled only when requested.
+                if (categories.has('llvm')) {
+                    const saved = command.args;
+                    command.args = [...saved, '-emit-llvm'];
+                    this.llvm = (await execute(command)).stdout;
+                    command.args = saved;
+                }
+                if (categories.has('ast')) {
+                    const saved = command.args;
+                    command.args = saved.filter(arg => !['-S', '-c', '-E', '-emit-llvm'].includes(arg));
+                    command.args.push('-fsyntax-only');
+                    command.bDumpAST = true;
+                    this.ast = (await execute(command)).stdout;
+                    command.bDumpAST = false;
+                    command.args = saved;
+                }
+                if (categories.has('preprocessed')) {
+                    command.args = command.args.filter(arg => !['-S', '-c', '-emit-llvm'].includes(arg));
+                    command.args.push('-E');
+                    this.preprocessed = (await execute(command)).stdout;
+                }
+            }
+        } finally {
+            if (temporary) await fs.rm(temporary, { recursive: true, force: true });
         }
-
-        let input = this.command.getInputPath();
-        let index = input?.lastIndexOf('.');
-        let path = input?.substring(0, index);
-        if (!path) { return; }
-        this.preprocessed = readFileSync(path + ".i").toString();
-        // this.llvm = readFileSync(path + ".ll").toString();
     }
 
     public parseLLVMDump(data: string) {
@@ -182,80 +194,118 @@ export class ComparedPipeline extends Pipeline {
     }
 }
 
-export class FileWatcher {
-    public path: string;
-    public watcher: vscode.FileSystemWatcher;
-    public dependentDocuments: vscode.TextDocument[] = [];
-
-    constructor(private core: Core, path: string) {
-        this.path = path;
-        this.watcher = vscode.workspace.createFileSystemWatcher(path, false, false, true);
-        this.watcher.onDidChange(this.onDidChange, this);
-        this.watcher.onDidCreate(this.onDidChange, this);
-    }
-    
-    onDidChange() {
-        console.log("onDidChange", this.path);
-        this.dependentDocuments.forEach(doc => {
-            let { pipeline, catergory, index } = splitURI(doc.uri);
-            this.core.runWithProgress(this.core.get(pipeline) as Pipeline);
-        });
-    }
-}
-
-export class DocumentWatcher {
-    private inputFiles = new Map<string, FileWatcher>();
-    private openURIs : vscode.Uri[] = [];
+export class DocumentWatcher implements vscode.Disposable {
+    private timers = new Map<Pipeline, ReturnType<typeof setTimeout>>();
+    private versions = new Map<Pipeline, number>();
+    private running = new Set<Pipeline>();
+    private dirty = new Set<Pipeline>();
+    private files = new Map<string, vscode.FileSystemWatcher>();
+    private disposed = false;
 
     constructor(private core: Core, subscriptions: vscode.Disposable[]) {
         core.watcher = this;
-        subscriptions.push(vscode.workspace.onDidOpenTextDocument(
-            this.onDidOpenTextDocument, this));
-        subscriptions.push(vscode.workspace.onDidCloseTextDocument(
-            this.onDidCloseTextDocument, this));
+        subscriptions.push(this,
+            vscode.workspace.onDidChangeTextDocument(event => {
+                if (event.contentChanges.length) this.changed(event.document.uri.fsPath);
+            }),
+            vscode.window.onDidChangeVisibleTextEditors(() => this.refreshVisible()));
     }
 
-    onDidOpenTextDocument(doc: vscode.TextDocument) {
-        if (doc.uri.scheme !== 'vscode-llvm') return;
-        this.openURIs.push(doc.uri);
+    track(pipeline: Pipeline) {
+        const input = pipeline.command.getInputPath();
+        if (!input) return;
+        const file = this.inputPath(pipeline)!;
+        if (!this.files.has(file)) {
+            const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(path.dirname(file), path.basename(file)));
+            watcher.onDidChange(() => this.changed(file));
+            watcher.onDidCreate(() => this.changed(file));
+            this.files.set(file, watcher);
+        }
+    }
 
-        let { pipeline, catergory, index } = splitURI(doc.uri);
-        if (pipeline) {
-            let file = this.core.get(pipeline)?.command.getInputPath() as string;
-            file = path.resolve(file);
-            if (this.inputFiles.has(file)) {
-                this.inputFiles.get(file)?.dependentDocuments.push(doc);
-            } else {
-                console.log("create new watcher for " + file);
-                let watcher = new FileWatcher(this.core, file);
-                watcher.dependentDocuments.push(doc);
-                this.inputFiles.set(file, watcher);
+    private inputPath(pipeline: Pipeline) {
+        const input = pipeline.command.getInputPath();
+        return input ? path.resolve(pipeline.command.env?.workdir || CommandEnv.getDefault().workdir || process.cwd(), input) : undefined;
+    }
+
+    private changed(file: string) {
+        for (const pipeline of this.core.allPipelines()) {
+            if (this.inputPath(pipeline) !== path.resolve(file)) continue;
+            this.versions.set(pipeline, (this.versions.get(pipeline) || 0) + 1);
+            this.dirty.add(pipeline);
+            this.schedule(pipeline);
+        }
+    }
+
+    private categories(pipeline: Pipeline) {
+        return new Set(vscode.window.visibleTextEditors
+            .filter(editor => editor.document.uri.scheme === PipelineContentProvider.scheme)
+            .map(editor => splitURI(editor.document.uri))
+            .filter(uri => uri.pipeline === pipeline.raw_command)
+            .map(uri => /^(before|after)/.test(uri.catergory) ? 'passes' : uri.catergory));
+    }
+
+    private refreshVisible() {
+        for (const pipeline of this.core.allPipelines()) {
+            // A newly visible category may not have been computed on the last edit.
+            if (this.categories(pipeline).size) {
+                this.versions.set(pipeline, (this.versions.get(pipeline) || 0) + 1);
+                this.dirty.add(pipeline);
+                this.schedule(pipeline);
             }
         }
     }
 
-    onDidCloseTextDocument(doc: vscode.TextDocument) {
-        if (doc.uri.scheme !== 'vscode-llvm') return;
-        let d = this.openURIs.indexOf(doc.uri);
-        if (d >= 0) { this.openURIs.splice(d, 1); }
+    private schedule(pipeline: Pipeline) {
+        const timer = this.timers.get(pipeline);
+        if (timer) clearTimeout(timer);
+        if (this.disposed || !this.categories(pipeline).size) return;
+        this.timers.set(pipeline, setTimeout(() => {
+            this.timers.delete(pipeline);
+            void this.refresh(pipeline);
+        }, 300));
+    }
 
-        let { pipeline, catergory, index } = splitURI(doc.uri);
-        if (pipeline) {
-            let file = this.core.get(pipeline)?.command.getInputPath() as string;
-            file = path.resolve(file);
-            let watcher = this.inputFiles.get(file);
-            if (!watcher) { return; }
-            let index = watcher.dependentDocuments.indexOf(doc);
-            if (index >= 0) {
-                watcher.dependentDocuments.splice(index, 1);
-                if (watcher.dependentDocuments.length === 0) {
-                    watcher.watcher.dispose();
-                    this.inputFiles.delete(file);
-                }
+    private async refresh(pipeline: Pipeline) {
+        if (this.disposed || this.running.has(pipeline) || !this.dirty.has(pipeline)) return;
+        const categories = this.categories(pipeline);
+        if (!categories.size) return;
+        const version = this.versions.get(pipeline);
+        this.running.add(pipeline);
+        this.dirty.delete(pipeline);
+        try {
+            const input = this.inputPath(pipeline);
+            const source = vscode.workspace.textDocuments.find(doc => doc.uri.scheme === 'file' && doc.uri.fsPath === input)?.getText();
+            const result = new Pipeline(pipeline.raw_command, pipeline.command);
+            await result.run(categories, source);
+            if (this.disposed || version !== this.versions.get(pipeline)) return;
+            for (const category of categories) {
+                if (category === 'passes') {
+                    pipeline.passList = result.passList;
+                    pipeline.backendList = result.backendList;
+                    [...pipeline.passList, ...pipeline.backendList].forEach(pass => pass.parent = pipeline);
+                } else if (category === 'output') pipeline.output = result.output;
+                else if (category === 'ast') pipeline.ast = result.ast;
+                else if (category === 'llvm') pipeline.llvm = result.llvm;
+                else if (category === 'preprocessed') pipeline.preprocessed = result.preprocessed;
             }
+            this.core.updated(pipeline);
+        } catch (error) {
+            // Incomplete source is expected while typing; preserve the last successful result.
+            console.log('LLVM live refresh failed:', error);
+        } finally {
+            this.running.delete(pipeline);
+            if (this.dirty.has(pipeline)) this.schedule(pipeline);
         }
     }
 
+    dispose() {
+        this.disposed = true;
+        this.timers.forEach(timer => clearTimeout(timer));
+        this.files.forEach(watcher => watcher.dispose());
+        this.timers.clear();
+        this.files.clear();
+    }
 }
 
 export class Core {
@@ -264,6 +314,13 @@ export class Core {
     public active?: Pipeline;
     private provider?: LLVMPipelineTreeDataProvider;
     public filter = "";
+    public readonly onUpdated = new vscode.EventEmitter<Pipeline>();
+
+    public allPipelines() { return this.pipelines.values(); }
+    public updated(pipeline: Pipeline) {
+        this.provider?.refresh();
+        this.onUpdated.fire(pipeline);
+    }
 
     public get(cmd: string) {
         return this.pipelines.get(cmd);
@@ -281,6 +338,7 @@ export class Core {
         let pipeline = new Pipeline(cmd, command);
         this.pipelines.set(cmd, pipeline);
         this.active = pipeline;
+        this.watcher?.track(pipeline);
         await this.runWithProgress(this.active);
         this.provider?.refresh();
     }
@@ -323,7 +381,13 @@ export class Core {
             title: 'Run Clang Command'
         }, async (progress) => {
             progress.report({ increment: 0 });
-            if (pipeline) await pipeline.run();
+            if (pipeline) {
+                const input = pipeline.command.getInputPath();
+                const file = input ? path.resolve(pipeline.command.env?.workdir || CommandEnv.getDefault().workdir || process.cwd(), input) : undefined;
+                const source = vscode.workspace.textDocuments.find(doc => doc.uri.scheme === 'file' && doc.uri.fsPath === file)?.getText();
+                await pipeline.run(undefined, source);
+                this.updated(pipeline);
+            }
             progress.report({ increment: 100 });
         });
     }
@@ -337,19 +401,67 @@ export class Core {
 
 
 export class PipelineContentProvider implements vscode.TextDocumentContentProvider {
+    private parser = new AsmWorkerClient();
+    private parsing = new Map<string, { output: string; promise: Promise<AsmDocument> }>();
     constructor(private core: Core, subscriptions: vscode.Disposable[]) {
         subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
-            PipelineContentProvider.scheme, this));
+            PipelineContentProvider.scheme, this), this._onDidChange,
+            core.onUpdated.event(pipeline => {
+                for (const doc of vscode.workspace.textDocuments) {
+                    if (doc.uri.scheme === PipelineContentProvider.scheme && splitURI(doc.uri).pipeline === pipeline.raw_command) {
+                        if (splitURI(doc.uri).catergory === 'output') {
+                            if (this.parsing.get(doc.uri.path)?.output === pipeline.output) { continue; }
+                            this.release(doc.uri.path);
+                        }
+                        if (vscode.window.visibleTextEditors.some(editor => editor.document.uri.toString() === doc.uri.toString())) {
+                            this._onDidChange.fire(doc.uri);
+                        }
+                    }
+                }
+            }));
+        subscriptions.push(this.parser, vscode.workspace.onDidCloseTextDocument(doc => {
+            if (doc.uri.scheme === PipelineContentProvider.scheme) { this.release(doc.uri.path); }
+        }), { dispose: () => { this.parsing.clear(); this._documents.clear(); } });
+    }
+
+    private release(key: string) {
+        this.parsing.delete(key);
+        this._documents.delete(key);
+        this.parser.cancel(key);
     }
 
     public static readonly scheme = 'vscode-llvm';
 
-    provideTextDocumentContent(uri: vscode.Uri) {
+    async provideTextDocumentContent(uri: vscode.Uri) {
         console.log("provideTextDocumentContent", uri);
         let { pipeline, catergory, index } = splitURI(uri);
 
         if (catergory == 'output') {
-            return this.provideAsmDocument(uri)?.value;
+            const { pipeline } = splitURI(uri);
+            const output = this.core.get(pipeline)?.output;
+            if (output === undefined) { return undefined; }
+            let pending = this.parsing.get(uri.path);
+            if (!pending || pending.output !== output) {
+                const promise = this.parser.parse(output, undefined, uri.path).then(result => {
+                    const document = new AsmDocument(uri, '', false, result.asm);
+                    if (this.parsing.get(uri.path)?.promise === promise) {
+                        this._documents.set(uri.path, document);
+                    }
+                    return document;
+                });
+                pending = { output, promise };
+                this.parsing.set(uri.path, pending);
+                void promise.catch(() => {
+                    if (this.parsing.get(uri.path)?.promise === promise) { this.parsing.delete(uri.path); }
+                });
+            }
+            try {
+                const document = await pending.promise;
+                return this.parsing.get(uri.path) === pending ? document.value : undefined;
+            } catch (error) {
+                if (error instanceof ParseCancelledError) { return undefined; }
+                throw error;
+            }
         } else if (catergory == 'ast') {
             return this.core.get(pipeline)?.ast;
         } else if (catergory == 'preprocessed') {
@@ -357,30 +469,19 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
         } else if (catergory == 'llvm') {
             return this.core.get(pipeline)?.llvm;
         } else if (catergory == 'before') {
-            return this.core.get(pipeline)?.passList[index].before_ir;
+            return this.core.get(pipeline)?.passList[index]?.before_ir;
         } else if (catergory == 'after') {
-            return this.core.get(pipeline)?.passList[index].after_ir;
+            return this.core.get(pipeline)?.passList[index]?.after_ir;
         } else if (catergory == 'before-b') {
-            return this.core.get(pipeline)?.backendList[index].before_ir;
+            return this.core.get(pipeline)?.backendList[index]?.before_ir;
         } else if (catergory == 'after-b') {
-            return this.core.get(pipeline)?.backendList[index].after_ir;
+            return this.core.get(pipeline)?.backendList[index]?.after_ir;
         }
     }
 
     private _documents = new Map<string, AsmDocument>();
     provideAsmDocument(uri: vscode.Uri): AsmDocument | undefined{
-        let document = this._documents.get(uri.path);
-        if (!document) {
-            let { pipeline, catergory, index } = splitURI(uri);
-
-            if (catergory == 'output') {
-                let output = this.core.get(pipeline)?.output;
-                if (!output) { return; }
-                document = new AsmDocument(uri, output);
-                this._documents.set(uri.path, document);
-            }
-        }
-        return document;
+        return this._documents.get(uri.path);
     }
 
     private _onDidChange = new vscode.EventEmitter<vscode.Uri>();

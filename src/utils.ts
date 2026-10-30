@@ -109,7 +109,7 @@ export function expandTabs(line: string): string {
 }
 
 export function squashHorizontalWhitespace(line: string, atStart: boolean): string {
-    const quotes = line.match(findQuotes);
+    const quotes = line.includes('"') ? line.match(findQuotes) : null;
     if (quotes) {
         return squashHorizontalWhitespace(quotes[1], atStart) + quotes[2] +
             squashHorizontalWhitespace(quotes[3], false);
