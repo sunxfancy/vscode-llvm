@@ -52,6 +52,19 @@ suite('Assembly parser regressions', () => {
             ['mov eax, .Ldata', '.Ldata:', '  .string "hello   world"']);
     });
 
+    test('follows weak label references up to ten levels, including cycles', () => {
+        const lines = ['mov eax, .L0'];
+        for (let i = 0; i < 12; i++) {
+            lines.push(`.L${i}:`, `  .quad .L${i + 1}, .L0`);
+        }
+        lines.push('.L12:', '  .quad .L0');
+        const result = parse(lines.join('\n'));
+        for (let i = 0; i <= 10; i++) {
+            assert.ok(result.labelDefinitions.has(`.L${i}`));
+        }
+        assert.ok(!result.labelDefinitions.has('.L11'));
+    });
+
     test('removes comment-only lines without removing instructions', () => {
         const result = parse('# comment\n; comment\n/* comment */\nret # keep instruction', { commentOnly: true });
         assert.deepStrictEqual(result.asm.map(line => line.text), ['ret # keep instruction']);

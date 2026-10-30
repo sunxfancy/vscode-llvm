@@ -131,10 +131,12 @@ export class AsmParser {
     indentedLabelDef = /^\s*([$.A-Z_a-z][\w$.]*):/;
     assignmentDef = /^\s*([$.A-Z_a-z][\w$.]*)\s*=/;
     directive = /^\s*\..*$/;
-    startAppBlock = /\s*#APP.*/;
-    endAppBlock = /\s*#NO_APP.*/;
-    startAsmNesting = /\s*# Begin ASM.*/;
-    endAsmNesting = /\s*# End ASM.*/;
+    // These expressions are only tested for presence. An unanchored leading
+    // whitespace repetition repeatedly scans indentation on non-matching lines.
+    startAppBlock = /#APP/;
+    endAppBlock = /#NO_APP/;
+    startAsmNesting = /# Begin ASM/;
+    endAsmNesting = /# End ASM/;
     cudaBeginDef = /\.(entry|func)\s+(?:\([^)]*\)\s*)?([$.A-Z_a-z][\w$.]*)\($/;
     cudaEndDef = /^\s*\)\s*$/;
 
@@ -289,32 +291,29 @@ export class AsmParser {
             }
         }
 
-        // Now follow the chains of used labels, marking any weak references they refer
-        // to as also used. We iteratively do this until either no new labels are found,
-        // or we hit a limit (only here to prevent a pathological case from hanging).
-        const MaxLabelIterations = 10;
-        for (let iter = 0; iter < MaxLabelIterations; ++iter) {
+        // Follow weak references one level at a time. Only newly discovered labels
+        // need to be visited on the next iteration.
+        if (weakUsages.size === 0) {
+            return labelsUsed;
+        }
+        const maxLabelIterations = 10;
+        let frontier = Array.from(labelsUsed);
+        for (let iter = 0; iter < maxLabelIterations && frontier.length > 0; ++iter) {
             const toAdd: string[] = [];
-
-            labelsUsed.forEach(label => {
+            for (const label of frontier) {
                 const labelWeakUsages = weakUsages.get(label);
                 if (labelWeakUsages === undefined) {
-                    return;
+                    continue;
                 }
-                labelWeakUsages.forEach(nowused => {
+                for (const nowused of labelWeakUsages) {
                     if (labelsUsed.has(nowused)) {
-                        return;
+                        continue;
                     }
+                    labelsUsed.add(nowused);
                     toAdd.push(nowused);
-                });
-            });
-            if (!toAdd) {
-                break;
+                }
             }
-
-            toAdd.forEach(label => {
-                labelsUsed.add(label);
-            });
+            frontier = toAdd;
         }
         return labelsUsed;
     }
@@ -364,14 +363,16 @@ export class AsmParser {
         const params = instruction.replace(this.instructionRe, '');
 
         const removedCol = instruction.length - params.length + 1;
-        params.replace(this.identifierFindRe, (label, index) => {
-            const startCol = removedCol + index;
+        this.identifierFindRe.lastIndex = 0;
+        let match: RegExpExecArray | null;
+        while ((match = this.identifierFindRe.exec(params)) !== null) {
+            const label = match[0];
+            const startCol = removedCol + match.index;
             labelsInLine.push(new AsmLabel(
                 label,
                 new AsmLabelRange(startCol, startCol + label.length)
             ));
-            return '';
-        });
+        }
 
         return labelsInLine;
     }
@@ -403,7 +404,15 @@ export class AsmParser {
         const source6502Dbg = /^\s*\.dbg\s+line,\s*"([^"]+)",\s*(\d+)/;
         const source6502DbgEnd = /^\s*\.dbg\s+line[^,]/;
         const sourceStab = /^\s*\.stabn\s+(\d+),0,(\d+),.*/;
-        const stdInLooking = /.*<stdin>|^-$|example\.[^/]+$|<source>/;
+        const stdInLooking = /<stdin>|^-$|example\.[^/]+$|<source>/;
+        // File classification is shared by all source locations in this parse.
+        const sourceFiles = new Map<string, string | undefined>();
+        function sourceFile(file: string): string | undefined {
+            if (!sourceFiles.has(file)) {
+                sourceFiles.set(file, stdInLooking.test(file) ? undefined : file);
+            }
+            return sourceFiles.get(file);
+        }
         const endBlock = /\.(cfi_endproc|data|text|section)/;
         let source: AsmSource | undefined;
 
@@ -421,7 +430,7 @@ export class AsmParser {
                 const sourceLine = parseInt(match[2]);
                 if (file) {
                     source = new AsmSource(
-                        !stdInLooking.test(file) ? file : undefined,
+                        sourceFile(file),
                         sourceLine
                     );
                     const sourceCol = parseInt(match[3]);
@@ -439,7 +448,7 @@ export class AsmParser {
                 const sourceLine = parseInt(match[4]);
                 if (file) {
                     source = new AsmSource(
-                        !stdInLooking.test(file) ? file : undefined,
+                        sourceFile(file),
                         sourceLine
                     );
                     if (match[6]) {
@@ -488,7 +497,7 @@ export class AsmParser {
                 const file = match[1];
                 const sourceLine = parseInt(match[2]);
                 source = new AsmSource(
-                    !stdInLooking.test(file) ? file : undefined,
+                    sourceFile(file),
                     sourceLine
                 );
             } else if (source6502DbgEnd.test(line)) {

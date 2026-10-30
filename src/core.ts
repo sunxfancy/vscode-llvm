@@ -3,6 +3,7 @@ import { CC1Command, ClangCommand, Command, CommandEnv } from './clang';
 import { LLVMPipelineTreeDataProvider } from './pipeline-panel';
 import { splitURI } from './utils';
 import { AsmDocument } from './document';
+import { AsmWorkerClient } from './asm-worker-client';
 import * as vscode from 'vscode';
 import { on } from 'events';
 import * as path from 'path';
@@ -337,19 +338,40 @@ export class Core {
 
 
 export class PipelineContentProvider implements vscode.TextDocumentContentProvider {
+    private parser = new AsmWorkerClient();
+    private parsing = new Map<string, { output: string; promise: Promise<AsmDocument> }>();
     constructor(private core: Core, subscriptions: vscode.Disposable[]) {
         subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(
             PipelineContentProvider.scheme, this));
+        subscriptions.push(this.parser);
     }
 
     public static readonly scheme = 'vscode-llvm';
 
-    provideTextDocumentContent(uri: vscode.Uri) {
+    async provideTextDocumentContent(uri: vscode.Uri) {
         console.log("provideTextDocumentContent", uri);
         let { pipeline, catergory, index } = splitURI(uri);
 
         if (catergory == 'output') {
-            return this.provideAsmDocument(uri)?.value;
+            const { pipeline } = splitURI(uri);
+            const output = this.core.get(pipeline)?.output;
+            if (output === undefined) { return undefined; }
+            let pending = this.parsing.get(uri.path);
+            if (!pending || pending.output !== output) {
+                const promise = this.parser.parse(output).then(result => {
+                    const document = new AsmDocument(uri, '', false, result.asm);
+                    if (this.parsing.get(uri.path)?.promise === promise) {
+                        this._documents.set(uri.path, document);
+                    }
+                    return document;
+                });
+                pending = { output, promise };
+                this.parsing.set(uri.path, pending);
+                void promise.catch(() => {
+                    if (this.parsing.get(uri.path)?.promise === promise) { this.parsing.delete(uri.path); }
+                });
+            }
+            return (await pending.promise).value;
         } else if (catergory == 'ast') {
             return this.core.get(pipeline)?.ast;
         } else if (catergory == 'preprocessed') {
@@ -369,18 +391,7 @@ export class PipelineContentProvider implements vscode.TextDocumentContentProvid
 
     private _documents = new Map<string, AsmDocument>();
     provideAsmDocument(uri: vscode.Uri): AsmDocument | undefined{
-        let document = this._documents.get(uri.path);
-        if (!document) {
-            let { pipeline, catergory, index } = splitURI(uri);
-
-            if (catergory == 'output') {
-                let output = this.core.get(pipeline)?.output;
-                if (!output) { return; }
-                document = new AsmDocument(uri, output);
-                this._documents.set(uri.path, document);
-            }
-        }
-        return document;
+        return this._documents.get(uri.path);
     }
 
     private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
