@@ -43,6 +43,8 @@ jobs:
         run: yarn lint
       - name: Unit regression tests
         run: yarn test:unit
+      - name: Live refresh regression tests
+        run: yarn test:live
       - name: Production bundle
         run: yarn package
 
