@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-unit-tests:
+    name: Build and unit tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+      - name: Locate Yarn cache
+        id: yarn-cache
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+      - name: Install dependencies from lockfile
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Lint
+        run: yarn lint
+      - name: Unit regression tests
+        run: yarn test:unit
+      - name: Production bundle
+        run: yarn package
+
+  extension-tests:
+    name: VS Code ${{ matrix.vscode }} and Clang
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        vscode: ['1.96.4', stable]
+    env:
+      VSCODE_TEST_VERSION: ${{ matrix.vscode }}
+      LLVM_TEST_CLANG: /usr/bin/clang++
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Yarn Classic
+        run: npm install --global yarn@1.22.22
+      - name: Locate Yarn cache
+        id: yarn-cache
+        run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+      - name: Install dependencies from lockfile
+        run: yarn install --frozen-lockfile --non-interactive
+      - name: Install compiler and virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang xvfb
+          clang++ --version
+      - name: Compile extension and tests
+        run: |
+          yarn compile-tests
+          yarn compile
+      - name: Extension-host and real Clang tests
+        run: xvfb-run -a yarn runtest
+      - name: Upload VS Code logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-${{ matrix.vscode }}-logs
+          path: .vscode-test/user-data/logs
+          if-no-files-found: ignore
+          retention-days: 7

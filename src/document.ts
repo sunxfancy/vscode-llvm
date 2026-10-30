@@ -32,11 +32,11 @@ export class AsmDocument {
     lines: AsmLine[] = [];
     sourceToAsmMapping = new Map<number, number[]>();
 
-    constructor(uri: Uri, doc: string, useBinaryParsing = false) {
+    constructor(uri: Uri, doc: string, useBinaryParsing = false, lines?: AsmLine[]) {
         const filter = new AsmFilter();
         filter.binary = useBinaryParsing;
         
-        this.lines = new AsmParser().process(doc, filter).asm;
+        this.lines = lines ?? new AsmParser().process(doc, filter).asm;
         this._uri = uri;
     }
 

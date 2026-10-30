@@ -11,8 +11,41 @@ export function splitURI(uri: vscode.Uri): { pipeline: string, catergory: string
 }
 
 export function parseShellArg(str: string): string[] | undefined {
-    return str.match(/"[^"]+"|'[^']+'|\S+/g)?.map(
-        x => (x[0] === '\"' || x[0] === '\'') ? x.substring(1, x.length - 1) : x);
+    const args: string[] = [];
+    let value = '';
+    let quote: string | undefined;
+    let started = false;
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        if (char === '\\' && quote !== "'") {
+            const next = str[i + 1];
+            if (next === undefined) { return undefined; }
+            // Preserve ordinary Windows path separators. Only consume escapes
+            // for shell syntax, and whitespace outside quoted strings.
+            if (next === '"' || next === '\\' || (!quote && (next === "'" || /\s/.test(next)))) {
+                value += next;
+                i++;
+            } else {
+                value += char;
+            }
+            started = true;
+        } else if (quote) {
+            if (char === quote) { quote = undefined; } else { value += char; }
+        } else if (char === '"' || char === "'") {
+            quote = char;
+            started = true;
+        } else if (/\s/.test(char)) {
+            if (started) { args.push(value); }
+            value = '';
+            started = false;
+        } else {
+            value += char;
+            started = true;
+        }
+    }
+    if (quote) { return undefined; }
+    if (started) { args.push(value); }
+    return args.length ? args : undefined;
 }
 
 export function getNonce() {
@@ -76,7 +109,7 @@ export function expandTabs(line: string): string {
 }
 
 export function squashHorizontalWhitespace(line: string, atStart: boolean): string {
-    const quotes = line.match(findQuotes);
+    const quotes = line.includes('"') ? line.match(findQuotes) : null;
     if (quotes) {
         return squashHorizontalWhitespace(quotes[1], atStart) + quotes[2] +
             squashHorizontalWhitespace(quotes[3], false);

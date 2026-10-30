@@ -59,8 +59,8 @@ export class AsmDecorator {
 
         const uri = asmEditor.document.uri;
         // rebuild decorations on asm document change
-        const providerEventRegistration = provider.onDidChange(changedUri => {
-            if (changedUri.toString() === uri.toString()) {
+        const providerEventRegistration = workspace.onDidChangeTextDocument(event => {
+            if (event.document.uri.toString() === uri.toString()) {
                 this.load(uri);
             }
         });
