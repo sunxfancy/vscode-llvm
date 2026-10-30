@@ -4,6 +4,14 @@ All notable changes to the "vscode-llvm" extension will be documented in this fi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## v0.5.0
+
+- Refresh visible compiler results after source edits, including unsaved changes, and defer hidden views.
+- Parse large assembly documents in a reusable background worker.
+- Speed up assembly parsing and retain cached results when output is unchanged.
+- Coalesce queued updates per document and release parsing caches when documents close.
+- Expand parser, live-refresh and worker regression coverage and add CI validation.
+
 ## v0.4.1
 show clang AST and highlight it
 

@@ -18,6 +18,7 @@ const vscode = {
     workspace: {
         textDocuments: [],
         onDidChangeTextDocument: changed.event,
+        onDidCloseTextDocument: new Emitter().event,
         createFileSystemWatcher: () => ({ onDidChange() {}, onDidCreate() {}, dispose() {} }),
         registerTextDocumentContentProvider: () => ({ dispose() {} })
     },
@@ -31,7 +32,7 @@ const { Pipeline, Core, DocumentWatcher, PipelineContentProvider } = require('..
 const { ClangCommand, CommandEnv } = require('../out/clang');
 Module._load = load;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-const uri = category => ({ scheme: 'vscode-llvm', path: `/compile/${category}` });
+const uri = category => ({ scheme: 'vscode-llvm', path: `/compile/${category}`, toString() { return this.path; } });
 
 test('lazy artifacts use unsaved VFS source, suppress pass dumps and clean temporary files', async () => {
     const command = new ClangCommand(['clang++', '-std=c++17', 'input.cpp']);
@@ -96,6 +97,7 @@ test('live edits debounce, discard stale results, defer hidden views and invalid
         assert.equal(pipeline.output, 'latest');
         assert.equal(notifications, 1);
         assert.deepEqual(calls[1].categories, ['output']);
+        await provider.provideTextDocumentContent(output.uri);
         const cached = provider.provideAsmDocument(output.uri);
         vscode.window.visibleTextEditors = [];
         source = 'hidden'; edit();
@@ -105,6 +107,7 @@ test('live edits debounce, discard stale results, defer hidden views and invalid
         visible.fire();
         await delay(350);
         assert.equal(pipeline.output, 'hidden');
+        await provider.provideTextDocumentContent(output.uri);
         assert.notEqual(provider.provideAsmDocument(output.uri), cached);
         assert.equal(notifications, 2);
     } finally {
